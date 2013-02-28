@@ -155,8 +155,8 @@
 
       var getGeoData = function() {
         var data = []
-        for (key in queue) {
-          d = queue[key]
+        for (var key in queue) {
+          var d = queue[key]
           data.push(d[0], d[1], d[2])
         }
         return data
@@ -171,25 +171,24 @@
       }, 200);
 
       var addGeoPoint = function(latitude, longitude) {
-        lat = Math.floor(latitude)
-        lon = Math.floor(longitude)
+        var lat = Math.floor(latitude);
+        var lon = Math.floor(longitude);
 
-        point = [lat, lon]
+        var point = [lat, lon]
         if (!(point in queue)) {
           queue[point] = [lat, lon, 0];
         } else {
           queue[point][2] += .01;
         }
-
-        console.log(queue[point])
       }
 
       var handleGeoEvent = function(e) {
         var startTime = new Date();
         var data = JSON.parse(e.data);
-        geo = data.message_body.geo
+        var geo = data.message_body.geo;
+        var size = 0;
+
         if (geo) { // geo might be undefined
-          size = 0;
           if (e.type == "Post") {size = .01;}
           else if (e.type == "Vote") {size = .2;}
           else if (e.type == "ThreadVote") {size = .1;}
