@@ -186,11 +186,10 @@
         geo = data.message_body.geo
         if (geo) { // geo might be undefined
           size = 0;
-          console.log(e.type)
-          if (e.type == "Post") {size = .3;}
-          if (e.type == "Vote") {size = .2;}
-          if (e.type == "ThreadVote") {size = .1;}
-          queue.push(geo.latitude, geo.longitude, size);
+          if (e.type == "Post") {size = .01;}
+          else if (e.type == "Vote") {size = .2;}
+          else if (e.type == "ThreadVote") {size = .1;}
+          queue.push(Math.floor(geo.latitude), Math.floor(geo.longitude), size);
           doTween();
         }
       };

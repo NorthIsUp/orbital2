@@ -176,7 +176,6 @@ DAT.Globe = function(container, colorFn) {
     opts.animated = opts.animated || false;
     this.is_animated = opts.animated;
     opts.format = opts.format || 'magnitude'; // other option is 'legend'
-    console.log(opts.format);
     if (opts.format === 'magnitude') {
       step = 3;
       colorFnWrapper = function(data, i) { return colorFn(data[i+2]); }
@@ -398,7 +397,7 @@ DAT.Globe = function(container, colorFn) {
     if (lastIndex >= 0) {
       this.points.morphTargetInfluences[lastIndex] = 1 - leftover;
     }
-    this.points.morphTargetInfluences[index] = leftover;
+    // this.points.morphTargetInfluences[index] = leftover;
     this._time = t;
   });
 
