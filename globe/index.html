@@ -137,28 +137,8 @@
 
     } else {
 
-      // var years = ['1990','1995','2000'];
       var container = document.getElementById('container');
       var globe = new DAT.Globe(container);
-
-      // var settime = function(globe, t) {
-      //   return function() {
-      //     var y = document.getElementById('year'+years[t]);
-      //     if (y.getAttribute('class') === 'year active') {
-      //       return;
-      //     }
-      //     var yy = document.getElementsByClassName('year');
-      //     for(var i=0; i<yy.length; i++) {
-      //       yy[i].setAttribute('class','year');
-      //     }
-      //     y.setAttribute('class', 'year active');
-      //   };
-      // };
-
-      // for(var i = 0; i<years.length; i++) {
-      //   var y = document.getElementById('year'+years[i]);
-      //   y.addEventListener('mouseover', settime(globe,i), false);
-      // }
 
 
       var ev = new EventSource("http://192.168.144.135:9080/api/raw/chattr");
@@ -171,16 +151,40 @@
         return c;
       };
       var counter = 0;
-      var queue = [];
+      var queue = {};
+
+      var getGeoData = function() {
+        var data = []
+        for (key in queue) {
+          d = queue[key]
+          data.push(d[0], d[1], d[2])
+        }
+        return data
+      }
+
       var doTween = _.throttle(function () {
-        globe.addData(queue,
+        globe.addData(getGeoData(),
             {format: 'magnitude', name: ++counter, animated: false});
           globe.createPoints();
 
           new TWEEN.Tween(globe).to({time: counter},500).easing(TWEEN.Easing.Cubic.Out).start();
-          queue = [];
       }, 200);
-      var addGeo = function(e) {
+
+      var addGeoPoint = function(latitude, longitude) {
+        lat = Math.floor(latitude)
+        lon = Math.floor(longitude)
+
+        point = [lat, lon]
+        if (!(point in queue)) {
+          queue[point] = [lat, lon, 0];
+        } else {
+          queue[point][2] += .01;
+        }
+
+        console.log(queue[point])
+      }
+
+      var handleGeoEvent = function(e) {
         var startTime = new Date();
         var data = JSON.parse(e.data);
         geo = data.message_body.geo
@@ -189,15 +193,16 @@
           if (e.type == "Post") {size = .01;}
           else if (e.type == "Vote") {size = .2;}
           else if (e.type == "ThreadVote") {size = .1;}
-          queue.push(Math.floor(geo.latitude), Math.floor(geo.longitude), size);
+
+          addGeoPoint(geo.latitude, geo.longitude);
           doTween();
         }
       };
 
 
-      ev.addEventListener("Post", addGeo);
-      // ev.addEventListener("Vote", addGeo);
-      // ev.addEventListener("ThreadVote", addGeo);
+      ev.addEventListener("Post", handleGeoEvent);
+      // ev.addEventListener("Vote", handleGeoEvent);
+      // ev.addEventListener("ThreadVote", handleGeoEvent);
 
 
       var animate = function(){
