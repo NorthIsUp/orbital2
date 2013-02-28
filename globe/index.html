@@ -161,7 +161,7 @@
       // }
 
 
-      var ev = new EventSource("http://172.16.113.103/api/raw/chattr");
+      var ev = new EventSource("http://192.168.144.135:9080/api/raw/chattr");
       var subgeo = new THREE.Geometry();
       var size = 200;
 
@@ -196,9 +196,9 @@
       };
 
 
-      // ev.addEventListener("Post", addGeo);
-      ev.addEventListener("Vote", addGeo);
-      ev.addEventListener("ThreadVote", addGeo);
+      ev.addEventListener("Post", addGeo);
+      // ev.addEventListener("Vote", addGeo);
+      // ev.addEventListener("ThreadVote", addGeo);
 
 
       var animate = function(){
