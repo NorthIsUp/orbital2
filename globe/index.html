@@ -163,10 +163,9 @@
       }
 
       var doTween = _.throttle(function () {
-        globe.addData(getGeoData(),
-            {format: 'magnitude', name: ++counter, animated: false});
+        var dataToAdd = {format: 'magnitude', name: ++counter, animated: false};
+        globe.addData(getGeoData(), dataToAdd);
           globe.createPoints();
-
           new TWEEN.Tween(globe).to({time: counter},500).easing(TWEEN.Easing.Cubic.Out).start();
       }, 200);
 
