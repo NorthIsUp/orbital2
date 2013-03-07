@@ -80,6 +80,8 @@ DAT.Globe = function(container, colorFn) {
   var rotation = { x: 0, y: 0 },
       target = { x: Math.PI*3/2, y: Math.PI / 6.0 },
       targetOnDown = { x: 0, y: 0 };
+  var focusPoints = [];
+
 
   var distance = 100000, distanceTarget = 100000;
   var padding = 40;
@@ -100,6 +102,7 @@ DAT.Globe = function(container, colorFn) {
     vector = new THREE.Vector3();
 
     scene = new THREE.Scene();
+
     sceneAtmosphere = new THREE.Scene();
 
     var geometry = new THREE.SphereGeometry(200, 40, 30);
@@ -107,8 +110,7 @@ DAT.Globe = function(container, colorFn) {
     shader = Shaders['earth'];
     uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
-    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world' +
-        '.jpg');
+    uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world.jpg');
 
     material = new THREE.ShaderMaterial({
 
@@ -178,10 +180,10 @@ DAT.Globe = function(container, colorFn) {
     opts.format = opts.format || 'magnitude'; // other option is 'legend'
     if (opts.format === 'magnitude') {
       step = 3;
-      colorFnWrapper = function(data, i) { return colorFn(data[i+2]); }
+      colorFnWrapper = function(data, i) { return colorFn(data[i+2]); };
     } else if (opts.format === 'legend') {
       step = 4;
-      colorFnWrapper = function(data, i) { return colorFn(data[i+3]); }
+      colorFnWrapper = function(data, i) { return colorFn(data[i+3]); };
     } else {
       throw('error: format not supported: '+opts.format);
     }
@@ -192,7 +194,7 @@ DAT.Globe = function(container, colorFn) {
         for (i = 0; i < data.length; i += step) {
           lat = data[i];
           lng = data[i + 1];
-//        size = data[i + 2];
+          // size = data[i + 2];
           color = colorFnWrapper(data,i);
           size = 0;
           addPoint(lat, lng, size, color, this._baseGeometry);
@@ -211,7 +213,7 @@ DAT.Globe = function(container, colorFn) {
       lng = data[i + 1];
       color = colorFnWrapper(data,i);
       size = data[i + 2];
-      size = size*200;
+      size = size * 100;
       addPoint(lat, lng, size, color, subgeo);
     }
     if (opts.animated) {
@@ -219,12 +221,14 @@ DAT.Globe = function(container, colorFn) {
     } else {
       this._baseGeometry = subgeo;
     }
-
   };
 
   function createPoints() {
     if (this._baseGeometry !== undefined) {
       if (this.is_animated === false) {
+        if (this.points !== undefined) {
+          scene.remove(this.points);
+        }
         this.points = new THREE.Mesh(this._baseGeometry, new THREE.MeshBasicMaterial({
               color: 0xffffff,
               vertexColors: THREE.FaceColors,
@@ -248,6 +252,21 @@ DAT.Globe = function(container, colorFn) {
       }
       scene.add(this.points);
     }
+  }
+
+  function addFocusPoint(name, lat, lng, duration){
+    var phi = (90 - lat) * Math.PI / 180;
+    var theta = (180 - lng) * Math.PI / 180;
+
+    x = 200 * Math.sin(phi) * Math.cos(theta);
+    y = 200 * Math.cos(phi);
+    z = 200 * Math.sin(phi) * Math.sin(theta);
+
+    if (focusPoints === undefined) {
+      focusPoints = [];
+    }
+
+    focusPoints.push({name:name, x:x, y:y, z:z, duration:duration});
   }
 
   function addPoint(lat, lng, size, color, subgeo) {
@@ -350,8 +369,29 @@ DAT.Globe = function(container, colorFn) {
     render();
   }
 
+  focusRotate = function() {
+    if (focusPoints !== undefined) {
+
+      t = focusPoints[0];
+      console.log('rotate', t)
+
+      target.x = t.x * 0.1;
+      target.y = t.y * 0.1;
+
+      focusPoints.push(focusPoints.shift());
+      console.log(focusPoints)
+    }
+    _.delay(focusRotate, t.duration * 1000);
+  };
+
   function render() {
     zoom(curZoomSpeed);
+
+    //rotation logic
+    // rotation.x += Math.min((target.x - rotation.x) * 0.2, -0.001);
+    // rotation.y += (target.y - rotation.y) * 0.3;
+
+    target.x += -0.001;
 
     rotation.x += (target.x - rotation.x) * 0.1;
     rotation.y += (target.y - rotation.y) * 0.1;
@@ -397,7 +437,9 @@ DAT.Globe = function(container, colorFn) {
     if (lastIndex >= 0) {
       this.points.morphTargetInfluences[lastIndex] = 1 - leftover;
     }
-    // this.points.morphTargetInfluences[index] = leftover;
+    if (this.animated) {
+      this.points.morphTargetInfluences[index] = leftover;
+    }
     this._time = t;
   });
 
@@ -405,6 +447,8 @@ DAT.Globe = function(container, colorFn) {
   this.createPoints = createPoints;
   this.renderer = renderer;
   this.scene = scene;
+  this.addFocusPoint = addFocusPoint;
+  this.focusRotate = focusRotate;
 
   return this;
 

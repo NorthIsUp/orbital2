@@ -24,3 +24,4 @@ pip-log.txt
 *.un~
 Session.vim
 /*.sublime-project
+node_modules
