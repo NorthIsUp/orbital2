@@ -370,7 +370,7 @@ DAT.Globe = function(container, colorFn) {
   }
 
   focusRotate = function() {
-    if (focusPoints !== undefined) {
+    if (focusPoints !== undefined && focusPoints.length > 0) {
 
       t = focusPoints[0];
       console.log('rotate', t)
@@ -380,8 +380,8 @@ DAT.Globe = function(container, colorFn) {
 
       focusPoints.push(focusPoints.shift());
       console.log(focusPoints)
+      _.delay(focusRotate, t.duration * 1000);
     }
-    _.delay(focusRotate, t.duration * 1000);
   };
 
   function render() {
