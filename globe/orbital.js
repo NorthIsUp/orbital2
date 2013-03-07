@@ -16,13 +16,22 @@ if(System.support.webgl === false){
 
   var counter = 0;
   var queue = {};
+  var decay = 0.0001;
 
   var getGeoData = function() {
     var data = [];
+    var d;
+
     for (var key in queue) {
-      var d = queue[key];
-      data.push(d[0], d[1], d[2]);
+      d = queue[key];
+      data.push(d.lat, d.lon, d.magnitude);
+
+      d.magnitude -= decay;
+      if (d.magnitude <= 0 && d.age++ >= 5) {
+        delete queue[key];
+      }
     }
+    console.log(data.length);
     return data;
   };
 
@@ -35,7 +44,7 @@ if(System.support.webgl === false){
 
   var roundPoint = function(x) {
     var scale = 2;
-    return (Math.round(x * scale) / scale).toFixed(2);
+    return parseFloat((Math.round(x * scale) / scale).toFixed(2));
   };
 
   var addGeoPoint = function(latitude, longitude) {
@@ -43,11 +52,11 @@ if(System.support.webgl === false){
     var lat = roundPoint(latitude);
     var lon = roundPoint(longitude);
 
-    var point = [lat, lon];
-    if (!(point in queue)) {
-      queue[point] = [lat, lon, 0];
+    var key = lat + ":" + lon;
+    if (!(key in queue)) {
+      queue[key] = {lat:lat, lon:lon, magnitude:0, age:0};
     } else {
-      var value = queue[point][2];
+      var value = queue[key].magnitude;
       var add = 0;
 
       var scale = 1;
@@ -70,7 +79,7 @@ if(System.support.webgl === false){
         add = 0;
       }
 
-      queue[point][2] += add * 0.001;
+      queue[key].magnitude += add * 0.001;
     }
   };
 
