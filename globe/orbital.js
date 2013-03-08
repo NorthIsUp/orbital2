@@ -15,73 +15,70 @@ if(System.support.webgl === false){
   var size = 200;
 
   var counter = 0;
-  var queue = {};
+  var geoPoints = {};
   var decay = 0.0001;
 
-  var getGeoData = function() {
-    var data = [];
+  var ageGeoData = _.throttle(function() {
     var d;
 
-    for (var key in queue) {
-      d = queue[key];
-      data.push(d.lat, d.lon, d.magnitude);
-
-      d.magnitude -= decay;
-      if (d.magnitude <= 0 && d.age++ >= 5) {
-        delete queue[key];
+    for (var key in geoPoints) {
+      d = geoPoints[key];
+      if(++d.age >= 5) {
+        d.mag -= decay;
+        if (d.mag <= 0) {
+          delete geoPoints[key];
+        }
       }
     }
-    console.log(data.length);
-    return data;
-  };
-
-  var doTween = _.throttle(function () {
-    var dataToAdd = {format: 'magnitude', name: ++counter, animated: false};
-    globe.addData(getGeoData(), dataToAdd);
-    globe.createPoints();
-    // new TWEEN.Tween(globe).to({time: 1},1000).easing(TWEEN.Easing.Cubic.Out).start();
   }, 1000);
 
-  var roundPoint = function(x) {
-    var scale = 2;
-    return parseFloat((Math.round(x * scale) / scale).toFixed(2));
-  };
+var throttle_time = 100;
+var doTween = _.throttle(function () {
+  globe.addData(geoPoints);
+  globe.createPoints();
+  throttle_time += throttle_time < 10000 ? throttle_time : throttle_time;
+  }, throttle_time);
 
-  var addGeoPoint = function(latitude, longitude) {
+var roundPoint = function(x) {
+  var scale = 2;
+  return parseFloat((Math.round(x * scale) / scale).toFixed(2));
+};
 
-    var lat = roundPoint(latitude);
-    var lon = roundPoint(longitude);
+var addGeoPoint = function(latitude, longitude) {
 
-    var key = lat + ":" + lon;
-    if (!(key in queue)) {
-      queue[key] = {lat:lat, lon:lon, magnitude:0, age:0};
+  var lat = roundPoint(latitude);
+  var lon = roundPoint(longitude);
+
+  var key = lat + ":" + lon;
+  if (!(key in geoPoints)) {
+    geoPoints[key] = {lat:lat, lon:lon, mag:0, age:0};
+  } else {
+    var mag = geoPoints[key].mag;
+    var add = 0;
+
+    var scale = 1;
+
+    if (mag < 0.01 * scale) {
+      add = 10;
+    } else if (mag < 0.05 * scale) {
+      add = 5;
+    } else if (mag < 0.1 * scale) {
+      add = 1;
+    } else if (mag < 0.3 * scale) {
+      add = 0.5;
+    } else if (mag < 0.6 * scale) {
+      add = 0.3;
+    } else if (mag < 0.9 * scale) {
+      add = 0.1;
+    } else if (mag == 1 * scale) {
+      add = 0;
     } else {
-      var value = queue[key].magnitude;
-      var add = 0;
-
-      var scale = 1;
-
-      if (value < 0.01 * scale) {
-        add = 10;
-      } else if (value < 0.05 * scale) {
-        add = 1;
-      } else if (value < 0.1 * scale) {
-        add = 0.5;
-      } else if (value < 0.3 * scale) {
-        add = 0.3;
-      } else if (value < 0.6 * scale) {
-        add = 0.1;
-      } else if (value < 0.9 * scale) {
-        add = 0.01;
-      } else if (value == 1 * scale) {
-        add = 0;
-      } else {
-        add = 0;
-      }
-
-      queue[key].magnitude += add * 0.001;
+      add = 0;
     }
-  };
+
+    geoPoints[key].mag += add * 0.001;
+  }
+};
 
 var handleGeoEvent = function(e) {
   var startTime = new Date();
@@ -97,6 +94,7 @@ var handleGeoEvent = function(e) {
 
       addGeoPoint(geo.latitude, geo.longitude);
       doTween();
+      ageGeoData();
     } else {
     }
 
@@ -108,13 +106,6 @@ var handleGeoEvent = function(e) {
   ev.addEventListener("Vote", handleGeoEvent);
   ev.addEventListener("ThreadVote", handleGeoEvent);
 
-  var animate = function(){
-    requestAnimationFrame(animate);
-    TWEEN.update();
-  };
-
-
-  animate();
   globe.animate();
   // globe.addFocusPoint('nyc', 40.77, 73.98, 3);
   // globe.addFocusPoint('london', 50.5, 0.166, 3);

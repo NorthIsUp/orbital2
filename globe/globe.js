@@ -17,7 +17,11 @@ DAT.Globe = function(container, colorFn) {
 
   colorFn = colorFn || function(x) {
     var c = new THREE.Color();
-    c.setHSV( ( 0.6 - ( x * 0.5 ) ), 1.0, 1.0 );
+    var h = ( 0.6 - ( x * 0.5 ) );
+    var s = 1.0;
+    var v = 1.0;
+    c.setHSL(h,s*v/((h=(2-s)*v)<1?h:2-h),h/2);
+
     return c;
   };
 
@@ -175,17 +179,12 @@ DAT.Globe = function(container, colorFn) {
   addData = function(data, opts) {
     var lat, lng, size, color, i, step, colorFnWrapper;
 
+    opts = opts || {};
     opts.animated = opts.animated || false;
     this.is_animated = opts.animated;
-    opts.format = opts.format || 'magnitude'; // other option is 'legend'
-    if (opts.format === 'magnitude') {
-      step = 3;
-      colorFnWrapper = function(data, i) { return colorFn(data[i+2]); };
-    } else if (opts.format === 'legend') {
-      step = 4;
-      colorFnWrapper = function(data, i) { return colorFn(data[i+3]); };
-    } else {
-      throw('error: format not supported: '+opts.format);
+
+    if (this._baseGeometry === undefined) {
+        this._baseGeometry = new THREE.Geometry();
     }
 
     if (opts.animated) {
@@ -195,7 +194,7 @@ DAT.Globe = function(container, colorFn) {
           lat = data[i];
           lng = data[i + 1];
           // size = data[i + 2];
-          color = colorFnWrapper(data,i);
+          color = colorFn(data.mag);
           size = 0;
           addPoint(lat, lng, size, color, this._baseGeometry);
         }
@@ -208,13 +207,10 @@ DAT.Globe = function(container, colorFn) {
       opts.name = opts.name || 'morphTarget'+this._morphTargetId;
     }
     var subgeo = new THREE.Geometry();
-    for (i = 0; i < data.length; i += step) {
-      lat = data[i];
-      lng = data[i + 1];
-      color = colorFnWrapper(data,i);
-      size = data[i + 2];
-      size = size * 100;
-      addPoint(lat, lng, size, color, subgeo);
+    for (var key in data) {
+      color = colorFn(data[key].mag);
+      size = data[key].mag * 100;
+      addPoint(data[key].lat, data[key].lon, size, color, subgeo);
     }
     if (opts.animated) {
       this._baseGeometry.morphTargets.push({'name': opts.name, vertices: subgeo.vertices});
@@ -226,15 +222,18 @@ DAT.Globe = function(container, colorFn) {
   function createPoints() {
     if (this._baseGeometry !== undefined) {
       if (this.is_animated === false) {
-        if (this.points !== undefined) {
+        if (this.points) {
           scene.remove(this.points);
         }
+
         this.points = new THREE.Mesh(this._baseGeometry, new THREE.MeshBasicMaterial({
               color: 0xffffff,
               vertexColors: THREE.FaceColors,
               morphTargets: false
             }));
       } else {
+        console.log('animated');
+
         if (this._baseGeometry.morphTargets.length < 8) {
           console.log('t l',this._baseGeometry.morphTargets.length);
           var padding = 8-this._baseGeometry.morphTargets.length;
