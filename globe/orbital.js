@@ -47,11 +47,11 @@ var roundPoint = function(x) {
 var addGeoPoint = function(latitude, longitude) {
 
   var lat = roundPoint(latitude);
-  var lon = roundPoint(longitude);
+  var lng = roundPoint(longitude);
 
-  var key = lat + ":" + lon;
+  var key = lat + ":" + lng;
   if (!(key in geoPoints)) {
-    geoPoints[key] = {lat:lat, lon:lon, mag:0, age:0};
+    geoPoints[key] = {lat:lat, lng:lng, mag:0, age:0};
   } else {
     var mag = geoPoints[key].mag;
     var add = 0;

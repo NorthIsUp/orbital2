@@ -144,8 +144,9 @@ DAT.Globe = function(container, colorFn) {
     mesh.scale.x = mesh.scale.y = mesh.scale.z = 1.1;
     sceneAtmosphere.add(mesh);
 
-    geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, undefined, { px: true,
-          nx: true, py: true, ny: true, pz: false, nz: true});
+    geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, undefined,
+      { px: true, nx: true, py: true, ny: true, pz: false, nz: true}
+    );
 
     geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0,0,0.5) );
 
@@ -193,7 +194,6 @@ DAT.Globe = function(container, colorFn) {
         for (i = 0; i < data.length; i += step) {
           lat = data[i];
           lng = data[i + 1];
-          // size = data[i + 2];
           color = colorFn(data.mag);
           size = 0;
           addPoint(lat, lng, size, color, this._baseGeometry);
@@ -210,7 +210,7 @@ DAT.Globe = function(container, colorFn) {
     for (var key in data) {
       color = colorFn(data[key].mag);
       size = data[key].mag * 100;
-      addPoint(data[key].lat, data[key].lon, size, color, subgeo);
+      addPoint(data[key].lat, data[key].lng, size, color, subgeo);
     }
     if (opts.animated) {
       this._baseGeometry.morphTargets.push({'name': opts.name, vertices: subgeo.vertices});
@@ -244,16 +244,17 @@ DAT.Globe = function(container, colorFn) {
           }
         }
         this.points = new THREE.Mesh(this._baseGeometry, new THREE.MeshBasicMaterial({
-              color: 0xffffff,
-              vertexColors: THREE.FaceColors,
-              morphTargets: true
-            }));
+          color: 0xffffff,
+          vertexColors: THREE.FaceColors,
+          morphTargets: true
+        }));
       }
       scene.add(this.points);
     }
   }
 
-  function addFocusPoint(name, lat, lng, duration){
+
+  function xyzFromGeo(lat, lng) {
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
 
@@ -261,20 +262,24 @@ DAT.Globe = function(container, colorFn) {
     y = 200 * Math.cos(phi);
     z = 200 * Math.sin(phi) * Math.sin(theta);
 
-    if (focusPoints === undefined) {
+    return {x:x, y:y, z:z};
+  }
+
+  function addFocusPoint(name, lat, lng, duration){
+    if (!this.focusPoints) {
       focusPoints = [];
     }
 
-    focusPoints.push({name:name, x:x, y:y, z:z, duration:duration});
+    var xyz = xyzFromGeo(lat, lng);
+    focusPoints.push({name:name, x:xyz.x, y:xyz.y, z:xyz.z, duration:duration});
   }
 
   function addPoint(lat, lng, size, color, subgeo) {
-    var phi = (90 - lat) * Math.PI / 180;
-    var theta = (180 - lng) * Math.PI / 180;
+    var xyz = xyzFromGeo(lat, lng);
 
-    point.position.x = 200 * Math.sin(phi) * Math.cos(theta);
-    point.position.y = 200 * Math.cos(phi);
-    point.position.z = 200 * Math.sin(phi) * Math.sin(theta);
+    point.position.x = xyz.x;
+    point.position.y = xyz.y;
+    point.position.z = xyz.z;
 
     point.lookAt(mesh.position);
 
