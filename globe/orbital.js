@@ -33,11 +33,10 @@ if(System.support.webgl === false){
   }, 1000);
 
 var throttle_time = 100;
-var doTween = _.throttle(function () {
-  globe.addData(geoPoints);
-  // globe.createPoints();
-  throttle_time += throttle_time < 10000 ? throttle_time : throttle_time;
-  }, throttle_time);
+// var doTween = _.throttle(function () {
+//   globe.addData(geoPoints);
+//   throttle_time += throttle_time < 10000 ? throttle_time : throttle_time;
+//   }, throttle_time);
 
 var roundPoint = function(x) {
   var scale = 2;
@@ -53,7 +52,8 @@ var addGeoPoint = function(latitude, longitude) {
   if (!(key in geoPoints)) {
     geoPoints[key] = {lat:lat, lng:lng, mag:0, age:0};
   } else {
-    var mag = geoPoints[key].mag;
+    var point = geoPoints[key];
+    var mag = point.mag;
     var add = 0;
 
     var scale = 1;
@@ -76,7 +76,8 @@ var addGeoPoint = function(latitude, longitude) {
       add = 0;
     }
 
-    geoPoints[key].mag += add * 0.001;
+    point.mag += add * 0.001;
+    globe.addPoint(point.lat, point.lng, point.mag);
   }
 };
 
@@ -93,7 +94,6 @@ var handleGeoEvent = function(e) {
       else if (e.type == "ThreadVote") {size = 0.1;}
 
       addGeoPoint(geo.latitude, geo.longitude);
-      doTween();
       ageGeoData();
     } else {
     }

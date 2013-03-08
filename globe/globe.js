@@ -17,7 +17,7 @@
 
   colorFn = colorFn || function(x) {
     var c = new THREE.Color();
-    var h = ( 0.6 - ( x * 0.5 ) );
+    var h = (0.6-(x*0.5));
     var s = 1.0;
     var v = 1.0;
     c.setHSL(h,s*v/((h=(2-s)*v)<1?h:2-h),h/2);
@@ -146,13 +146,6 @@
     mesh.scale.x = mesh.scale.y = mesh.scale.z = 1.1;
     sceneAtmosphere.add(mesh);
 
-    geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, undefined,
-      { px: true, nx: true, py: true, ny: true, pz: false, nz: true}
-      );
-
-    geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0,0,0.5) );
-    this.point_geometry = geometry;
-
     renderer = new THREE.WebGLRenderer({antialias: true});
     renderer.autoClear = false;
     renderer.setClearColorHex(0x000000, 0.0);
@@ -179,16 +172,6 @@
     }, false);
   }
 
-  addData = function(data) {
-    var lat, lng, size, color, colorFnWrapper;
-
-    for (var key in data) {
-      color = colorFn(data[key].mag);
-      size = data[key].mag * 100;
-      addPoint(data[key].lat, data[key].lng, size, color, subgeo);
-    }
-  };
-
   function xyzFromGeo(lat, lng) {
     var phi = (90 - lat) * Math.PI / 180;
     var theta = (180 - lng) * Math.PI / 180;
@@ -209,22 +192,45 @@
     focusPoints.push({name:name, x:xyz.x, y:xyz.y, z:xyz.z, duration:duration});
   }
 
-  function addPoint(lat, lng, size, color, subgeo) {
+  addData = function(data) {
+    _.each(_.values(data), function(p) {
+      addPoint(p.lat, p.lng, p.mag);
+    });
+  };
+
+  function addPoint(lat, lng, mag) {
+    var size = mag * 100;
     var key = lat + ":" + lng;
+
     var xyz = xyzFromGeo(lat, lng);
+    // tl([size, mag]);
+    var color = colorFn(mag);
+
+    var point_geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, undefined,
+      { px: true, nx: true, py: true, ny: true, pz: false, nz: true}
+      );
+
+    point_geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0,0,0.5) );
+    point_geometry.dynamic = true;
 
     var point;
     if (key in pointObjects) {
       point = pointObjects[key];
-      scene.remove(point);
     } else {
-      point = new THREE.Mesh(this.point_geometry, new THREE.MeshBasicMaterial({
-          color: 0xffffff,
-          vertexColors: THREE.FaceColors,
-          morphTargets: false
+      point = new THREE.Mesh(point_geometry, new THREE.MeshBasicMaterial({
+        color: 0xffffff,
+        vertexColors: THREE.FaceColors,
+        morphTargets: false
       }));
+
       pointObjects[key] = point;
+      scene.add(point);
     }
+
+    _.each(point.geometry.faces, function(face){
+      face.color = color;
+    });
+    point.geometry.colorsNeedUpdate = true;
 
     point.position.x = xyz.x;
     point.position.y = xyz.y;
@@ -233,14 +239,8 @@
     point.lookAt(mesh.position);
 
     point.scale.z = -size;
+
     point.updateMatrix();
-
-    for (var i = 0; i < point.geometry.faces.length; i++) {
-      point.geometry.faces[i].color = color;
-    }
-
-    scene.add(point);
-    // THREE.GeometryUtils.merge(subgeo, point);
   }
 
   var projector = new THREE.Projector();
@@ -252,7 +252,7 @@
       (event.clientX/window.innerWidth)*2-1,
       -(event.clientY/window.innerHeight)*2+1,
       0.5
-    );
+      );
 
     projector.unprojectVector(vector, camera);
 
@@ -263,9 +263,12 @@
     if (intersects.length > 0) {
       _.each(intersects, function(point) {
         // if it is CubeGeometry it is a block, not the earth
-        if(point.object.geometry instanceof THREE.CubeGeometry){
-          point.object.material.color = colorFn(Math.random());
-          // _.each(point.object.geometry.faces, function(face){face.color = c;});
+        var geometry = point.object.geometry;
+        if(geometry instanceof THREE.CubeGeometry){
+          _.each(geometry.faces, function(face){
+            face.color = colorFn(Math.random());
+          });
+          geometry.colorsNeedUpdate = true;
         }
       });
     }
@@ -358,13 +361,11 @@
     if (focusPoints !== undefined && focusPoints.length > 0) {
 
       t = focusPoints[0];
-      console.log('rotate', t)
 
       target.x = t.x * 0.1;
       target.y = t.y * 0.1;
 
       focusPoints.push(focusPoints.shift());
-      console.log(focusPoints)
       _.delay(focusRotate, t.duration * 1000);
     }
   };
@@ -397,38 +398,8 @@
   init();
   this.animate = animate;
 
-
-  this.__defineGetter__('time', function() {
-    return this._time || 0;
-  });
-
-  this.__defineSetter__('time', function(t) {
-    var validMorphs = [];
-    var morphDict = this.points.morphTargetDictionary;
-    for(var k in morphDict) {
-      if(k.indexOf('morphPadding') < 0) {
-        validMorphs.push(morphDict[k]);
-      }
-    }
-    validMorphs.sort();
-    var l = validMorphs.length-1;
-    var scaledt = t*l+1;
-    var index = Math.floor(scaledt);
-    for (i=0;i<validMorphs.length;i++) {
-      this.points.morphTargetInfluences[validMorphs[i]] = 0;
-    }
-    var lastIndex = index - 1;
-    var leftover = scaledt - index;
-    if (lastIndex >= 0) {
-      this.points.morphTargetInfluences[lastIndex] = 1 - leftover;
-    }
-    if (this.animated) {
-      this.points.morphTargetInfluences[index] = leftover;
-    }
-    this._time = t;
-  });
-
   this.addData = addData;
+  this.addPoint = addPoint;
   // this.createPoints = createPoints;
   this.renderer = renderer;
   this.scene = scene;
