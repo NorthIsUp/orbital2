@@ -206,7 +206,8 @@
     // tl([size, mag]);
     var color = colorFn(mag);
 
-    var point_geometry = new THREE.CubeGeometry(0.75, 0.75, 1, 1, 1, 1, undefined,
+    var width = 1;
+    var point_geometry = new THREE.CubeGeometry(width, width, 1, 1, 1, 1, undefined,
       { px: true, nx: true, py: true, ny: true, pz: false, nz: true}
       );
 
@@ -266,7 +267,7 @@
         var geometry = point.object.geometry;
         if(geometry instanceof THREE.CubeGeometry){
           _.each(geometry.faces, function(face){
-            face.color = colorFn(Math.random());
+            face.color = colorFn('#' + Math.floor(Math.random()*16777215).toString(16));
           });
           geometry.colorsNeedUpdate = true;
         }

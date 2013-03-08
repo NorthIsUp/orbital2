@@ -1,0 +1,96 @@
+
+html {
+    height: 100%;
+}
+
+body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+    background: #000000 url(loading.gif) center center no-repeat;
+    color: #ffffff;
+    font-size: 13px;
+    font-family: sans-serif;
+    line-height: 20px;
+}
+
+#info {
+    position: absolute;
+    right: 10px;
+    bottom: 5px;
+    padding: 10px;
+    border-radius: 3px;
+    background-color: rgba(0,0,0,0.8);
+
+    font-size: 11px;
+
+}
+
+#currentInfo {
+    position: absolute;
+    top: 63px;
+    left: 20px;
+    padding: 10px;
+    width: 270px;
+
+    border-top: 1px solid rgba(255,255,255,0.4);
+
+    background-color: rgba(0,0,0,0.2);
+}
+
+a {
+    color: #aaa;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+.bull {
+    padding: 0 5px;
+    color: #555;
+}
+
+#title {
+    position: absolute;
+    top: 20px;
+    left: 20px;
+    padding: 10px;
+    width: 270px;
+    border-radius: 3px;
+    background-color: rgba(0,0,0,0.2);
+    font: 20px Georgia;
+}
+
+.year {
+    float: left;
+    width: 90px;
+    height: 30px;
+    color: rgba(255, 255, 255, 0.4);
+    text-align: center;
+    font: 16px Georgia;
+    line-height: 26px;
+
+    cursor: pointer;
+    -webkit-transition: all 0.1s ease-out;
+}
+
+.year:hover, .year.active {
+    color: #fff;
+    font-size: 23px;
+}
+
+#ce span {
+    display: none;
+}
+
+#ce {
+    position: absolute;
+    bottom: 15px;
+    left: 20px;
+    display: block;
+    width: 107px;
+    height: 55px;
+    background: url(ce.png);
+}
