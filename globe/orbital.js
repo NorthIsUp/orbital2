@@ -35,7 +35,7 @@ if(System.support.webgl === false){
 var throttle_time = 100;
 var doTween = _.throttle(function () {
   globe.addData(geoPoints);
-  globe.createPoints();
+  // globe.createPoints();
   throttle_time += throttle_time < 10000 ? throttle_time : throttle_time;
   }, throttle_time);
 
