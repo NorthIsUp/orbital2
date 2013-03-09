@@ -1,17 +1,32 @@
+@bgcolor: black;
 
 html {
     height: 100%;
+    overflow: hidden;
 }
 
 body {
     margin: 0;
     padding: 0;
     height: 100%;
-    background: #000000 url(loading.gif) center center no-repeat;
-    color: #ffffff;
+    background: @bgcolor url(loading.gif) center center no-repeat;
+    color: white;
     font-size: 13px;
     font-family: sans-serif;
     line-height: 20px;
+}
+
+.postbox {
+    width: 30em;
+    padding: 1em;
+    background-color: #222;
+    margin: 1em;
+}
+
+.postbox.avatar {
+    display: inline-block;
+    float: left;
+    width: 30px;
 }
 
 #info {

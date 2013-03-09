@@ -40,7 +40,7 @@ for geo-data and adds it to an animated, interactive WebGL globe.
 var container = document.getElementById( 'container' );
 
 // Make the globe
-var globe = new DAT.Globe( container );
+var globe = new ORBITAL.Globe( container );
 
 // We're going to ask a file for the JSON data.
 xhr = new XMLHttpRequest();
