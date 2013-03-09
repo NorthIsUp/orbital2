@@ -11,10 +11,6 @@ if(System.support.webgl === false){
   var $container = $('#container');
   var globe = new ORBITAL.Globe($container);
 
-  var subgeo = new THREE.Geometry();
-  var size = 200;
-
-  var counter = 0;
   var geoPoints = {};
   var decay = 0.0001;
 
@@ -32,17 +28,11 @@ if(System.support.webgl === false){
     }
   }, 1000);
 
-  var roundPoint = function(x) {
-    var scale = 2;
-    return parseFloat((Math.round(x * scale) / scale).toFixed(2));
-  };
-
   var addGeoPoint = function(latitude, longitude) {
+    var lat = ORBITAL.GeoUtil.roundPoint(latitude, 1);
+    var lng = ORBITAL.GeoUtil.roundPoint(longitude, 1);
 
-    var lat = roundPoint(latitude);
-    var lng = roundPoint(longitude);
-
-    var key = lat + ":" + lng;
+    var key = ORBITAL.GeoUtil.llkey(lat, lng);
     if (!(key in geoPoints)) {
       geoPoints[key] = {lat:lat, lng:lng, mag:0, age:0};
     } else {
@@ -126,9 +116,8 @@ if(System.support.webgl === false){
   ev.addEventListener("ThreadVote", handleGeoEvent);
 
   globe.animate();
-  // globe.addFocusPoint('nyc', 40.77, 73.98, 3);
-  // globe.addFocusPoint('london', 50.5, 0.166, 3);
-
-  globe.focusRotate();
+  globe.addFocusPoint('new york', 40.77, 73.98, 3);
+  globe.addFocusPoint('london', 50.5, 0.166, 3);
+  // globe.focusRotate();
 
 }

@@ -1,7 +1,7 @@
 ORBITAL.Globe = function($container, colorFn) {
     self = self || {};
 
-    var Shaders = {
+    var shaders = {
         'earth' : {
             uniforms: {
                 'texture': { type: 't', value: null }
@@ -47,28 +47,27 @@ ORBITAL.Globe = function($container, colorFn) {
     };
 
     // TODO: document all this stuff
-    var pointCache = [];
-    var camera, scene, sceneAtmosphere, renderer, w, h;
+    self.pointCache = [];
+    self.focusPoints = [];
+
+    var camera, sceneAtmosphere, renderer, w, h;
     var vector, mesh, atmosphere, point;
     var overRenderer;
     var imgDir = '';
     var curZoomSpeed = 0;
     var zoomSpeed = 50;
-    var mouse = { x: 0, y: 0 }, mouseOnDown = { x: 0, y: 0 };
+    var mouse = { x: 0, y: 0 };
+    var mouseOnDown = { x: 0, y: 0 };
     var rotation = { x: 0, y: 0 };
     var target = { x: Math.PI*3/2, y: Math.PI / 6.0 };
     var targetOnDown = { x: 0, y: 0 };
-    var focusPoints = [];
-    var distance = 100000, distanceTarget = 100000;
+    var distance = 100000;
+    var distanceTarget = 100000;
     var padding = 40;
     var PI_HALF = Math.PI / 2;
 
-    function init() {
-        var shader, uniforms, material, geometry;
-
-        // TODO: move to less
-        $container.attr('style', 'color: #fff');
-        $container.attr('style', 'font: 13px/20px Arial, sans-serif');
+    init = function() {
+        var shader, uniforms, material, earth_geometry;
 
         w = $container.offsetWidth || window.innerWidth;
         h = $container.offsetHeight || window.innerHeight;
@@ -77,13 +76,13 @@ ORBITAL.Globe = function($container, colorFn) {
         camera.position.z = distance;
 
         vector = new THREE.Vector3();
-        scene = new THREE.Scene();
+        self.scene = new THREE.Scene();
         sceneAtmosphere = new THREE.Scene();
 
         // Earth
-        geometry = new THREE.SphereGeometry(200, 40, 30);
+        earth_geometry = new THREE.SphereGeometry(200, 40, 30);
 
-        shader = Shaders['earth'];
+        shader = shaders['earth'];
         uniforms = THREE.UniformsUtils.clone(shader.uniforms);
         uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world-2.jpg');
 
@@ -93,13 +92,13 @@ ORBITAL.Globe = function($container, colorFn) {
             fragmentShader: shader.fragmentShader
         });
 
-        mesh = new THREE.Mesh(geometry, material);
+        mesh = new THREE.Mesh(earth_geometry, material);
         mesh._type = 'earth';
         mesh.rotation.y = Math.PI;
-        scene.add(mesh);
+        self.scene.add(mesh);
 
         // atmosphere
-        shader = Shaders['atmosphere'];
+        shader = shaders['atmosphere'];
         uniforms = THREE.UniformsUtils.clone(shader.uniforms);
 
         material = new THREE.ShaderMaterial({
@@ -109,7 +108,7 @@ ORBITAL.Globe = function($container, colorFn) {
             side: THREE.BackSide
         });
 
-        mesh = new THREE.Mesh(geometry, material);
+        mesh = new THREE.Mesh(earth_geometry, material);
         mesh.scale.x = mesh.scale.y = mesh.scale.z = 1.1;
         sceneAtmosphere.add(mesh);
 
@@ -124,39 +123,37 @@ ORBITAL.Globe = function($container, colorFn) {
         $container.append(renderer.domElement);
 
         // Event listeners
-        $container.on('mousedown', onMouseDown);
-        $container.on('mousewheel', onMouseWheel);
-        $container.on('mousemove', onMouseMoveWithMouseUp);
         $(document).on('keydown', onDocumentKeyDown);
         $(window).on('resize', onWindowResize);
-        $container.on('mouseover', function() {overRenderer = true; });
+        $container.on('mousedown', onMouseDown);
+        $container.on('mousemove', onMouseMoveWithMouseUp);
         $container.on('mouseout', function() {overRenderer = false; });
-    }
+        $container.on('mouseover', function() {overRenderer = true; });
+        $container.on('mousewheel', onMouseWheel);
+    };
 
-
-
-    function addData(data) {
+    self.addData = function(data) {
         _.each(_.values(data), function(p) {
             addPoint(p.lat, p.lng, p.mag);
         });
-    }
+    };
 
-    function addPoint(lat, lng, mag) {
+    self.addPoint = function(lat, lng, mag) {
         var key = ORBITAL.GeoUtil.llkey(lat, lng);
         var point = null;
-        if (key in pointCache){
-            point = pointCache[key];
+        if (key in self.pointCache){
+            point = self.pointCache[key];
             point.setMag(mag);
             point.update();
         } else {
-            point = new ORBITAL.Point(lat, lng, mag, mesh);
-            pointCache[key] = point;
+            point = new ORBITAL.Point(lat, lng, mag, mesh, self.scene);
+            self.pointCache[key] = point;
         }
-    }
+    };
 
     var projector = new THREE.Projector();
 
-    function onMouseMoveWithMouseUp(event) {
+    self.onMouseMoveWithMouseUp = function(event) {
         event.preventDefault();
 
         var mouseX = (event.clientX / window.innerWidth) * 2 - 1;
@@ -167,24 +164,25 @@ ORBITAL.Globe = function($container, colorFn) {
 
         var ray = new THREE.Raycaster(camera.position, vector.sub(camera.position).normalize());
 
-        var intersects = ray.intersectObjects(scene.children);
+        var intersects = ray.intersectObjects(self.scene.children);
 
         if (intersects.length > 0) {
             _.each(intersects, function(point) {
                 if(point.object.type == "point"){
                     var geometry = point.object.geometry;
 
+                    var color = ORBITAL.Util.colorFnRand();
                     _.each(geometry.faces, function(face){
-                        face.color = ORBITAL.Util.colorFnRand();
+                        face.color = color;
                     });
 
                     geometry.colorsNeedUpdate = true;
                 }
             });
         }
-    }
+    };
 
-    function onMouseMoveWithMouseDown(event) {
+    self.onMouseMoveWithMouseDown = function(event) {
         mouse.x = - event.clientX;
         mouse.y = event.clientY;
 
@@ -195,10 +193,11 @@ ORBITAL.Globe = function($container, colorFn) {
 
         target.y = target.y > PI_HALF ? PI_HALF : target.y;
         target.y = target.y < - PI_HALF ? - PI_HALF : target.y;
-    }
+    };
 
-    function onMouseDown(event) {
+    self.onMouseDown = function(event) {
         event.preventDefault();
+
         // on
         $container.on('mousemove', onMouseMoveWithMouseDown);
         $container.on('mouseup', onMouseUp);
@@ -207,7 +206,6 @@ ORBITAL.Globe = function($container, colorFn) {
         // off
         $container.off('mousemove', onMouseMoveWithMouseUp);
 
-
         mouseOnDown.x = - event.clientX;
         mouseOnDown.y = event.clientY;
 
@@ -215,9 +213,9 @@ ORBITAL.Globe = function($container, colorFn) {
         targetOnDown.y = target.y;
 
         $container.attr('style', 'cursor: move');
-    }
+    };
 
-    function onMouseUp(event) {
+    self.onMouseUp = function(event) {
         // on
         $container.on('mousemove', onMouseMoveWithMouseUp);
 
@@ -226,25 +224,25 @@ ORBITAL.Globe = function($container, colorFn) {
         $container.off('mouseup', onMouseUp);
         $container.off('mouseout', onMouseOut);
         $container.attr('style', 'cursor: auto');
-    }
+    };
 
-    function onMouseOut(event) {
+    self.onMouseOut = function(event) {
         // off
         $container.off('mousemove', onMouseMoveWithMouseUp);
         $container.off('mousemove', onMouseMoveWithMouseDown);
         $container.off('mouseup', onMouseUp);
         $container.off('mouseout', onMouseOut);
-    }
+    };
 
-    function onMouseWheel(event) {
+    self.onMouseWheel = function(event) {
         event.preventDefault();
         if (overRenderer) {
             zoom(event.originalEvent.wheelDeltaY * 0.3);
         }
         return false;
-    }
+    };
 
-    function onDocumentKeyDown(event) {
+    self.onDocumentKeyDown = function(event) {
         switch (event.keyCode) {
             case 38:
                 zoom(100);
@@ -255,58 +253,65 @@ ORBITAL.Globe = function($container, colorFn) {
                 event.preventDefault();
                 break;
         }
-    }
+    };
 
-    function onWindowResize( event ) {
+    self.onWindowResize = function( event ) {
         camera.aspect = window.innerWidth / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize( window.innerWidth, window.innerHeight );
-    }
+    };
 
-    function zoom(delta) {
+    self.zoom = function(delta) {
         distanceTarget -= delta;
         distanceTarget = distanceTarget > 1000 ? 1000 : distanceTarget;
         distanceTarget = distanceTarget < 350 ? 350 : distanceTarget;
-    }
+    };
 
-    function animate() {
+    self.animate = function() {
         requestAnimationFrame(animate);
         render();
-    }
+    };
 
-    function focusRotate() {
-        if (focusPoints !== undefined && focusPoints.length > 0) {
+    self.focusRotate = function() {
+        // move the focus between points on the focus list
+        if (self.focusPoints !== undefined && self.focusPoints.length > 0) {
 
-            t = focusPoints[0];
+            t = self.focusPoints[0];
+            xyz = ORBITAL.GeoUtil.xyzFromGeo(t.lat, t.lng);
+            self.glide(xyz.x, xyz.y);
 
-            focusPoints.push(focusPoints.shift());
+            self.focusPoints.push(self.focusPoints.shift());
             _.delay(focusRotate, t.duration * 1000);
         }
-    }
+    };
 
-    function addFocusPoint(name, lat, lng, duration){
+    self.addFocusPoint = function(name, lat, lng, duration){
+        // add a point to the list of focus points
         if (!self.focusPoints) {
-            focusPoints = [];
+            self.focusPoints = [];
         }
 
         var xyz = ORBITAL.GeoUtil.xyzFromGeo(lat, lng);
-        focusPoints.push({name:name, x:xyz.x, y:xyz.y, z:xyz.z, duration:duration});
-    }
+        self.focusPoints.push({name:name, x:xyz.x, y:xyz.y, z:xyz.z, duration:duration});
+    };
 
-    function setFocus(lat, lng, opts){
+    self.setFocus = function(lat, lng, opts){
+        // move the camera to a lat, lng
         opts = opts || {};
 
         t = ORBITAL.GeoUtil.xyzFromGeo(lat, lng);
         self.glide(t.x, t.y);
 
         if(opts.hilight) {
-            point = pointCache[ORBITAL.GeoUtil.llkey(lat, lng)];
+            point = self.pointCache[ORBITAL.GeoUtil.llkey(lat, lng)];
 
         }
-    }
+    };
 
-    var glide = _.throttle(function(x, y) {
+    self.glide = _.throttle(function(x, y, duration) {
         // glide the globe to x, y over 1 second
+
+        duration = duration || 1000;
 
         var zoomDamp = distance/1000;
 
@@ -318,11 +323,11 @@ ORBITAL.Globe = function($container, colorFn) {
         t.y = target.y > PI_HALF ? PI_HALF : target.y;
         t.y = target.y < - PI_HALF ? - PI_HALF : target.y;
 
-        var tween = new TWEEN.Tween(target).to(t, 1000);
+        var tween = new TWEEN.Tween(target).to(t, duration);
         tween.start();
     }, 1000);
 
-    function render() {
+    self.render = function() {
         zoom(curZoomSpeed);
         TWEEN.update();
 
@@ -337,26 +342,16 @@ ORBITAL.Globe = function($container, colorFn) {
         camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y);
         camera.position.y = distance * Math.sin(rotation.y);
         camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
-        camera.lookAt(scene.position);
+        camera.lookAt(self.scene.position);
 
         vector.copy(camera.position);
 
         renderer.clear();
-        renderer.render(scene, camera);
+        renderer.render(self.scene, camera);
         renderer.render(sceneAtmosphere, camera);
-    }
+    };
 
     init();
-
-    self.addData = addData;
-    self.addFocusPoint = addFocusPoint;
-    self.addPoint = addPoint;
-    self.animate = animate;
-    self.focusRotate = focusRotate;
-    self.glide = glide;
-    self.renderer = renderer;
-    self.scene = scene;
-    self.setFocus = setFocus;
 
     return self;
 };

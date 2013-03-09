@@ -38,10 +38,13 @@ ORBITAL.PointUtil = (function (self) {
 
         if(opts.mag) {
             point.scale.z = -(opts.mag * 100);
+            if(!opts.color) {
+                opts.color = ORBITAL.Util.colorFn(opts.mag);
+            }
         }
 
         if(opts.color) {
-                _.each(point.geometry.faces, function(face){
+            _.each(point.geometry.faces, function(face){
                 face.color = opts.color;
             });
             point.geometry.colorsNeedUpdate = true;
@@ -54,7 +57,7 @@ ORBITAL.PointUtil = (function (self) {
         point.updateMatrix();
     };
 
-    self.meshForLL = function(lat, lng, mag, position){
+    self.meshForLL = function(lat, lng, mag, position, scene){
         var xyz = ORBITAL.GeoUtil.xyzFromGeo(lat, lng);
         var color = ORBITAL.Util.colorFn(mag);
 
@@ -84,9 +87,9 @@ ORBITAL.PointUtil = (function (self) {
     return self;
 }());
 
-ORBITAL.Point = function(lat, lng, mag, mesh, data, onUpdate) {
+ORBITAL.Point = function(lat, lng, mag, mesh, scene, data, onUpdate) {
     this.relMesh = mesh;
-    this.mesh = ORBITAL.PointUtil.meshForLL(lat, lng, mag, this.relMesh.position);
+    this.mesh = ORBITAL.PointUtil.meshForLL(lat, lng, mag, this.relMesh.position, scene);
     this.meta = data || null;
     this.onUpdate = onUpdate || null;
 };

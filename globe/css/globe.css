@@ -2,7 +2,8 @@ html{height:100%;overflow:hidden;}
 body{margin:0;padding:0;height:100%;background:#000000 url(loading.gif) center center no-repeat;color:white;font-size:13px;font-family:sans-serif;line-height:20px;}
 .postbox{width:30em;padding:1em;background-color:#222;background-color:rgba(0, 0, 0, 0.2);}
 .postbox.avatar{display:inline-block;float:left;width:30px;}
-#info{position:absolute;right:10px;bottom:5px;padding:10px;border-radius:3px;background-color:rgba(0, 0, 0, 0.8);font-size:11px;}
+.info{position:absolute;right:10px;bottom:5px;padding:10px;border-radius:3px;background-color:rgba(0, 0, 0, 0.8);font-size:11px;}
+#container{color:#fff;font:13px/20px Arial,sans-serif;}
 #currentInfo{position:absolute;top:63px;left:20px;padding:10px;width:270px;border-top:1px solid rgba(255, 255, 255, 0.4);background-color:rgba(0, 0, 0, 0.2);}
 a{color:#aaa;text-decoration:none;}
 a:hover{text-decoration:underline;}
