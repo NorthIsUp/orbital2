@@ -96,24 +96,22 @@ ORBITAL.PointUtil = (function (self) {
                 var fromHSL = _.clone(hslList[opts.i]);
                 var toHSL = hslList[++opts.i];
 
-                var flashTween = new TWEEN.Tween(fromHSL)
+                point.flashTween = new TWEEN.Tween(fromHSL)
                     .to(toHSL, opts.flashItemDuration)
                     .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onUpdate(flashUpdate);
-
-                if(opts.i === 0){
-                    flashTween.onComplete(flashComplete);
-                    point.flashTween = flashTween;
-                }
+                    .onUpdate(flashUpdate)
+                    .start();
 
                 if(opts.i < hslList.length - 1){
-                    flashTween.chain(fade(hslList, opts));
+                    point.flashTween.onComplete(function(){
+                        fade(hslList, opts);
+                    });
+                } else {
+                    point.flashTween.onComplete(flashComplete);
                 }
-
-                return flashTween;
             };
 
-            fade(opts.flashHSLList, opts).start();
+            fade(opts.flashHSLList, opts);
         }
 
         if(opts.mag) {

@@ -174,7 +174,7 @@ ORBITAL.Globe = function($container, opts) {
         point.update({
             flash:true,
             flashOver:true,
-            flashDuration:60 * 1000,
+            flashDuration:10 * 1000,
             flashHSLList: self.hslList
         });
     };
@@ -259,7 +259,7 @@ ORBITAL.Globe = function($container, opts) {
 
     self.onMouseUp = function(event) {
         // on
-        $container.on('mousemove', onMouseMoveWithMouseUp);
+        // $container.on('mousemove', onMouseMoveWithMouseUp);
 
         // off
         $container.off('mousemove', onMouseMoveWithMouseDown);
