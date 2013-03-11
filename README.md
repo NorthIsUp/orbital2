@@ -5,75 +5,24 @@ It supports data in JSON format, a sample of which you can find [here]
 library, and is still in early open development.
 
 
-### Data Format ###
+### making a globe ###
+The globe requires a container to be drawn in, and for you to start the animation.
 
-The following illustrates the JSON data format that the globe expects:
-
-```javascript
-var data = [
-  [
-    'seriesA',
-    [
-      [ lattitude, longitude, magnitude ],
-      [ lattitude, longitude, magnitude ],
-      [ lattitude, longitude, magnitude ]
-    ]
-  ],
-  [
-    'seriesB',
-    [
-      [ lattitude, longitude, magnitude ],
-      [ lattitude, longitude, magnitude ],
-      [ lattitude, longitude, magnitude ],
-    ]
-  ]
-];
+```
+var $container = $('#container');
+var globe = new ORBITAL.Globe($container);
+globe.animate();
 ```
 
-### Basic Usage ###
 
-The following code polls a JSON file (formatted like the one above)
-for geo-data and adds it to an animated, interactive WebGL globe.
+### Adding data to the globe ###
+Adding a point to the globe will occur in realtime and you can do it whenever you want.
 
-```javascript
-// Where to put the globe?
-var container = document.getElementById( 'container' );
-
-// Make the globe
-var globe = new ORBITAL.Globe( container );
-
-// We're going to ask a file for the JSON data.
-xhr = new XMLHttpRequest();
-
-// Where do we get the data?
-xhr.open( 'GET', 'myjson.json', true );
-
-// What do we do when we have it?
-xhr.onreadystatechange = function() {
-
-  // If we've received the data
-  if ( xhr.readyState === 4 && xhr.status === 200 ) {
-
-      // Parse the JSON
-      var data = JSON.parse( xhr.responseText );
-
-      // Tell the globe about your JSON data
-      for ( i = 0; i < data.length; i++ ) {
-        globe.addData( data[i][1], 'magnitude', data[i][0] );
-      }
-
-      // Create the geometry
-      globe.createPoints();
-
-      // Begin animation
-      globe.animate();
-
-    }
-
-  }
-
-};
-
-// Begin request
-xhr.send( null );
 ```
+globe.addPoint(lat, lng, mag);
+```
+
+The globe internally keeps track of points you have added. If you use the same latitude and longitude it will update the existing point instead of creating a new one.
+
+To intentionally alter metadata on an existing point use the `globe.getPoint(lat, lng)` method.
+

@@ -96,8 +96,8 @@ if(System.support.webgl === false){
   ev.addEventListener("Vote", handleGeoEvent);
   ev.addEventListener("ThreadVote", handleGeoEvent);
 
-  globe.addFocusPoint('new york', 40.77, 73.98, 3);
-  globe.addFocusPoint('london', 50.5, 0.166, 3);
+  // globe.addFocusPoint('new york', 40.77, 73.98, 3);
+  // globe.addFocusPoint('london', 50.5, 0.166, 3);
   // globe.focusRotate();
 
 }
