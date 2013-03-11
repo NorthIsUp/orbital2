@@ -10,6 +10,7 @@ if(System.support.webgl === false){
 
   var $container = $('#container');
   var globe = new ORBITAL.Globe($container);
+  globe.animate();
 
   var geoPoints = {};
   var decay = 0.0001;
@@ -31,8 +32,8 @@ if(System.support.webgl === false){
   var addGeoPoint = function(latitude, longitude) {
     var lat = ORBITAL.GeoUtil.roundPoint(latitude, 1);
     var lng = ORBITAL.GeoUtil.roundPoint(longitude, 1);
-
     var key = ORBITAL.GeoUtil.llkey(lat, lng);
+
     if (!(key in geoPoints)) {
       geoPoints[key] = {lat:lat, lng:lng, mag:0, age:0};
     } else {
@@ -115,7 +116,6 @@ if(System.support.webgl === false){
   ev.addEventListener("Vote", handleGeoEvent);
   ev.addEventListener("ThreadVote", handleGeoEvent);
 
-  globe.animate();
   globe.addFocusPoint('new york', 40.77, 73.98, 3);
   globe.addFocusPoint('london', 50.5, 0.166, 3);
   // globe.focusRotate();

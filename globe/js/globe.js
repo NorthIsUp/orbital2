@@ -49,9 +49,11 @@ ORBITAL.Globe = function($container, colorFn) {
     // TODO: document all this stuff
     self.pointCache = [];
     self.focusPoints = [];
+    self.earth = null;
 
     var camera, sceneAtmosphere, renderer, w, h;
     var vector, mesh, atmosphere, point;
+
     var overRenderer;
     var imgDir = '';
     var curZoomSpeed = 0;
@@ -92,10 +94,10 @@ ORBITAL.Globe = function($container, colorFn) {
             fragmentShader: shader.fragmentShader
         });
 
-        mesh = new THREE.Mesh(earth_geometry, material);
-        mesh._type = 'earth';
-        mesh.rotation.y = Math.PI;
-        self.scene.add(mesh);
+        self.earth = new THREE.Mesh(earth_geometry, material);
+        self.earth._type = 'earth';
+        self.earth.rotation.y = Math.PI;
+        self.scene.add(self.earth);
 
         // atmosphere
         shader = shaders['atmosphere'];
@@ -149,6 +151,7 @@ ORBITAL.Globe = function($container, colorFn) {
             point = new ORBITAL.Point(lat, lng, mag, mesh, self.scene);
             self.pointCache[key] = point;
         }
+        // point.update({flash:new THREE.Color("#FF0000")});
     };
 
     var projector = new THREE.Projector();
@@ -172,9 +175,7 @@ ORBITAL.Globe = function($container, colorFn) {
                     var geometry = point.object.geometry;
 
                     var color = ORBITAL.Util.colorFnRand();
-                    _.each(geometry.faces, function(face){
-                        face.color = color;
-                    });
+                    ORBITAL.PointUtil.setPointColor(point.object, color);
 
                     geometry.colorsNeedUpdate = true;
                 }
@@ -332,7 +333,7 @@ ORBITAL.Globe = function($container, colorFn) {
         TWEEN.update();
 
         // make the earth slowly rotate
-        // target.x += -0.001;
+        target.x += -0.001;
 
         rotation.x += (target.x - rotation.x) * 0.1;
         rotation.y += (target.y - rotation.y) * 0.1;
@@ -342,6 +343,19 @@ ORBITAL.Globe = function($container, colorFn) {
         camera.position.x = distance * Math.sin(rotation.x) * Math.cos(rotation.y);
         camera.position.y = distance * Math.sin(rotation.y);
         camera.position.z = distance * Math.cos(rotation.x) * Math.cos(rotation.y);
+
+        // TODO: figure out how to move the earth, not the camera.
+
+        // use these:
+        // self.earth.rotation.x;
+        // self.earth.rotation.y;
+        // self.earth.rotation.x;
+
+        // instead of these:
+        // camera.position.x = 866;
+        // camera.position.y = 500;
+        // camera.position.z = 0;
+
         camera.lookAt(self.scene.position);
 
         vector.copy(camera.position);

@@ -1,6 +1,28 @@
 ORBITAL.PointUtil = (function (self) {
     self = self || {};
 
+    self.setPointHSL = function (point, hsl) {
+        // work for either the point class or a mesh
+        mesh = point.mesh || point;
+        mesh.material.color.setHSL(hsl.h, hsl.s, hsl.l);
+
+        // _.each(point.geometry.faces, function(face){
+        //     face.color.setHSL(hsl.h, hsl.s, hsl.l);
+        // });
+        // point.geometry.colorsNeedUpdate = true;
+    };
+
+    self.setPointColor = function (point, color) {
+        // work for either the point class or a mesh
+        mesh = point.mesh || point;
+        mesh.material.color = color;
+
+        // _.each(point.geometry.faces, function(face){
+        //     face.color = color;
+        // });
+        // point.geometry.colorsNeedUpdate = true;
+    };
+
     self.getNewSquareMesh = function(width) {
         return this.getNewMesh(width, width);
     };
@@ -13,10 +35,12 @@ ORBITAL.PointUtil = (function (self) {
         point_geometry.applyMatrix( new THREE.Matrix4().makeTranslation(0,0,0.5) );
         point_geometry.dynamic = true;
 
-        var mesh = new THREE.Mesh(point_geometry, new THREE.MeshBasicMaterial({
-            color: 0xffffff,
-            vertexColors: THREE.FaceColors,
-            morphTargets: false
+        var mesh = new THREE.Mesh(point_geometry,
+            new THREE.MeshBasicMaterial({
+                color: 0xFF0000,
+                shading: THREE.SmoothShading,
+                vertexColors: THREE.FaceColors,
+                morphTargets: false
         }));
 
         return mesh;
@@ -24,40 +48,70 @@ ORBITAL.PointUtil = (function (self) {
 
     self.meshUpdate = function(point, opts) {
         opts = opts || {};
+
         if(opts.x) {
-            point.position.x = opts.x;
+            point.mesh.position.x = opts.x;
         }
 
         if(opts.y) {
-            point.position.y = opts.y;
+            point.mesh.position.y = opts.y;
         }
 
         if(opts.z) {
-            point.position.z = opts.z;
+            point.mesh.position.z = opts.z;
         }
 
         if(opts.mag) {
-            point.scale.z = -(opts.mag * 100);
-            if(!opts.color) {
+            point.mesh.scale.z = -(opts.mag * 100);
+            if(!opts.color && !point.flashTween) {
                 opts.color = ORBITAL.Util.colorFn(opts.mag);
             }
         }
 
-        if(opts.color) {
-            _.each(point.geometry.faces, function(face){
-                face.color = opts.color;
-            });
-            point.geometry.colorsNeedUpdate = true;
+        if(opts.flash && !point.flashTween) {
+            // get current color
+            var beforeColor = ORBITAL.Util.colorFn(point.mag);
+
+            //point.mesh.geometry.faces[0].color.getHSL();
+            var flashColor = opts.flash;
+
+            // set to flash color
+            self.setPointColor(point, flashColor);
+            // self.setPointFacesColor(point.mesh, flashColor);
+
+            var flashUpdate = function() {
+                self.setPointHSL(this.mesh, this);
+            };
+
+            var flashComplete = function(){
+                delete this.flashTween;
+            };
+
+            // tween to new color
+            opts.flashDuration = opts.flashDuration || 1000;
+            point.flashTween = new TWEEN.Tween(point.mesh.material.color)
+                .to(beforeColor.getHSL())
+
+                // .to(beforeColor.getHSL(), opts.flashDuration)
+                .easing(TWEEN.Easing.Quadratic.In)
+                // .onUpdate(flashUpdate)
+                .onComplete(flashComplete)
+                .start();
         }
 
-        if(opts.position) {
-            point.lookAt(opts.position);
+        if(opts.color && !point.flashTween) {
+            self.setPointHSL(point, opts.color.getHSL());
         }
 
-        point.updateMatrix();
+        if(opts.position || opts.lookat) {
+            point.mesh.lookAt(opts.position || opts.lookat);
+        }
+
+        point.mesh.updateMatrix();
     };
 
-    self.meshForLL = function(lat, lng, mag, position, scene){
+    self.meshForLL = function(lat, lng, mag, position, scene, opts){
+        opts = opts || {};
         var xyz = ORBITAL.GeoUtil.xyzFromGeo(lat, lng);
         var color = ORBITAL.Util.colorFn(mag);
 
@@ -66,11 +120,7 @@ ORBITAL.PointUtil = (function (self) {
         point = self.getNewSquareMesh(1);
         point.type = "point";
 
-        _.each(point.geometry.faces, function(face){
-          face.color = color;
-        });
-
-        point.geometry.colorsNeedUpdate = true;
+        self.setPointColor(point, color);
 
         point.position.x = xyz.x;
         point.position.y = xyz.y;
@@ -80,7 +130,20 @@ ORBITAL.PointUtil = (function (self) {
         point.lookAt(position);
 
         point.updateMatrix();
+
         scene.add(point);
+
+
+        // if (opts.drop) {
+        //     point.translate(1000, point.up);
+        //     var tween = new TWEEN.Tween(point.position)
+        //         .to(xyz, 1000);
+        //     if (opts.dropCleanup) {
+        //         tween.onComplete(function(){scene.remove(this);});
+        //     }
+        //     tween.start();
+        // }
+
         return point;
     };
 
@@ -105,17 +168,17 @@ ORBITAL.Point.prototype.getXY = function() {
 };
 
 ORBITAL.Point.prototype.setLL = function(lat, lng) {
-        this.lat = lat;
-        this.lng = lng;
+    this.lat = lat;
+    this.lng = lng;
 };
 
 ORBITAL.Point.prototype.setMag = function(mag) {
-        this.mag = mag;
+    this.mag = mag;
 };
 
 ORBITAL.Point.prototype.update = function(opts) {
-    var xyz = this.getXY();
     if (!opts){
+        var xyz = this.getXY();
         opts = {
             mag:this.mag,
             x:xyz.x,
@@ -127,7 +190,6 @@ ORBITAL.Point.prototype.update = function(opts) {
     if(this.onUpdate){
         this.onUpdate(opts);
     } else {
-        ORBITAL.PointUtil.meshUpdate(this.mesh, opts);
+        ORBITAL.PointUtil.meshUpdate(this, opts);
     }
 };
-
