@@ -9,7 +9,7 @@ if(System.support.webgl === false){
 } else {
 
   var $container = $('#container');
-  var globe = new ORBITAL.Globe($container, {scale: 4});
+  var globe = new ORBITAL.Globe($container, {scale: 2});
   globe.animate();
 
   var addGeoPoint = function(latitude, longitude) {
@@ -80,7 +80,7 @@ if(System.support.webgl === false){
     // $post.prepend($avatar);
     $postbox.append($post);
 
-    postinfo.append($postbox);
+    // postinfo.append($postbox);
 
     while(postinfo.height() > window.innerHeight){
       $("#postInfo div:first").remove();
@@ -88,7 +88,7 @@ if(System.support.webgl === false){
 
     // globe.setFocus(mb.geo.latitude, mb.geo.longitude);
 
-  }, 10);
+  }, 0);
 
   var ev = new EventSource("http://realtime.services.disqus.com/api/raw/orbital");
 

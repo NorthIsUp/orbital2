@@ -5,6 +5,15 @@ ORBITAL.Globe = function($container, opts) {
     opts.scale = opts.scale || 2;
     opts.worldImage = opts.worldImage || 'world.jpg';
 
+    self.hslList = [
+        _.clone(new THREE.Color("#FF0900").getHSL()), //#FF2E46 is on 'wrong side of hsl'
+        _.clone(new THREE.Color("#FF632E").getHSL()),
+        _.clone(new THREE.Color("#FFC62E").getHSL()),
+        _.clone(new THREE.Color("#4BAD00").getHSL()),
+        // _.clone(new THREE.Color("#922EFF").getHSL()),
+        _.clone(new THREE.Color("#2E9FFF").getHSL())
+    ];
+
     var shaders = {
         'earth' : {
             uniforms: {
@@ -163,9 +172,10 @@ ORBITAL.Globe = function($container, opts) {
             self.pointCache[key] = point;
         }
         point.update({
-            flash:new THREE.Color("#F00"),
+            flash:true,
             flashOver:true,
-            flashDuration:60 * 1000
+            flashDuration:60 * 1000,
+            flashHSLList: self.hslList
         });
     };
 

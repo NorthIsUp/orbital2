@@ -1,36 +1,30 @@
+tlog = ORBITAL.getTemporaryLogger();
+
 ORBITAL.PointUtil = (function (self) {
     self = self || {};
 
     self.getPointColor = function (point) {
+        // TODO: move to point class
         mesh = point.mesh || point;
         return mesh.material.color;
-    };
-
-    self.getPointHSL = function (point) {
-        mesh = point.mesh || point;
-        return mesh.material.color.getHSL();
-    };
-
-    self.setPointHSL = function (point, hsl) {
-        // work for either the point class or a mesh
-        mesh = point.mesh || point;
-        mesh.material.color.setHSL(hsl.h, hsl.s, hsl.l);
-
-        // _.each(point.geometry.faces, function(face){
-        //     face.color.setHSL(hsl.h, hsl.s, hsl.l);
-        // });
-        // point.geometry.colorsNeedUpdate = true;
     };
 
     self.setPointColor = function (point, color) {
         // work for either the point class or a mesh
         mesh = point.mesh || point;
         mesh.material.color = color;
+    };
 
-        // _.each(point.geometry.faces, function(face){
-        //     face.color = color;
-        // });
-        // point.geometry.colorsNeedUpdate = true;
+    self.getPointHSL = function (point) {
+        // TODO: move to point class
+        mesh = point.mesh || point;
+        return mesh.material.color.getHSL();
+    };
+
+    self.setPointHSL = function (point, hsl) {
+        // TODO: move to point class
+        mesh = point.mesh || point;
+        mesh.material.color.setHSL(hsl.h, hsl.s, hsl.l);
     };
 
     self.getNewSquareMesh = function(width) {
@@ -79,18 +73,13 @@ ORBITAL.PointUtil = (function (self) {
         if(opts.flash && !point.flashTween) {
             // FIXME AMH: Flash does not correctly traverse the HSL wheel.
             // currently it treats it as a Cartesian plane, needs to be radial.
+
             opts.flashDuration = opts.flashDuration || 2000;
+            opts.flashHSLList = opts.flashHSLList || [flashColorHSL, beforeColorHSL];
 
-            // get current color
-            var beforeColorHSL = _.clone(ORBITAL.Util.colorFn(point.mag).getHSL());
-
-            var flashColor = opts.flashColor || opts.flash;
-            var flashColorHSL = flashColor.getHSL();
-
-            // set to flash color
-            self.setPointHSL(point, flashColorHSL);
 
             var flashUpdate = function() {
+                // interpolates HSL space, but outputs RGB string (for compatibility)
                 self.setPointHSL(point, this);
             };
 
@@ -99,27 +88,32 @@ ORBITAL.PointUtil = (function (self) {
                 delete point.flashTween;
             };
 
-            var fadeBack = function(){
-                // to old color
-                point.flashTween = new TWEEN.Tween(_.clone(flashColorHSL))
-                    .to(beforeColorHSL, opts.flashDuration)
-                    .easing(TWEEN.Easing.Cubic.Out)
-                    .onUpdate(flashUpdate)
-                    .onComplete(flashComplete)
-                    .start();
-            };
+            var fade = function(hslList, opts) {
+                opts.i = opts.i || 0;
+                opts.flashItemDuration = opts.flashItemDuration || 200;
+                opts.flashItemDuration = opts.flashDuration / opts.flashHSLList.length;
 
-            var fadeFlash = function(){
-                // to flash color
-                point.flashTween = new TWEEN.Tween(_.clone(beforeColorHSL))
-                    .to(flashColorHSL, 200)
+                var fromHSL = _.clone(hslList[opts.i]);
+                var toHSL = hslList[++opts.i];
+
+                var flashTween = new TWEEN.Tween(fromHSL)
+                    .to(toHSL, opts.flashItemDuration)
                     .easing(TWEEN.Easing.Quadratic.InOut)
-                    .onUpdate(flashUpdate)
-                    .onComplete(fadeBack)
-                    .start();
+                    .onUpdate(flashUpdate);
+
+                if(opts.i === 0){
+                    flashTween.onComplete(flashComplete);
+                    point.flashTween = flashTween;
+                }
+
+                if(opts.i < hslList.length - 1){
+                    flashTween.chain(fade(hslList, opts));
+                }
+
+                return flashTween;
             };
 
-            fadeFlash();
+            fade(opts.flashHSLList, opts).start();
         }
 
         if(opts.mag) {
