@@ -146,12 +146,15 @@ ORBITAL.Globe = function($container, colorFn) {
         if (key in self.pointCache){
             point = self.pointCache[key];
             point.setMag(mag);
-            point.update();
         } else {
             point = new ORBITAL.Point(lat, lng, mag, mesh, self.scene);
             self.pointCache[key] = point;
         }
-        // point.update({flash:new THREE.Color("#FF0000")});
+        point.update({
+            flash:new THREE.Color("#F00"),
+            flashOver:true,
+            flashDuration:300 * 1000
+        });
     };
 
     var projector = new THREE.Projector();

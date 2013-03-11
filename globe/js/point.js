@@ -1,6 +1,16 @@
 ORBITAL.PointUtil = (function (self) {
     self = self || {};
 
+    self.getPointColor = function (point) {
+        mesh = point.mesh || point;
+        return mesh.material.color;
+    };
+
+    self.getPointHSL = function (point) {
+        mesh = point.mesh || point;
+        return mesh.material.color.getHSL();
+    };
+
     self.setPointHSL = function (point, hsl) {
         // work for either the point class or a mesh
         mesh = point.mesh || point;
@@ -61,42 +71,48 @@ ORBITAL.PointUtil = (function (self) {
             point.mesh.position.z = opts.z;
         }
 
+        if(opts.flash && opts.flashOver && point.flashTween) {
+            point.flashTween.stop();
+            delete point.flashTween;
+        }
+
+        if(opts.flash && !point.flashTween) {
+            // get current color
+            var beforeColorHSL = ORBITAL.Util.colorFn(point.mag).getHSL();
+
+            // need to create a new object apparently
+            beforeColorHSL = {h:beforeColorHSL.h, s:beforeColorHSL.s, l:beforeColorHSL.l};
+
+            var flashColor = opts.flashColor || opts.flash;
+            var flashColorHSL = flashColor.getHSL();
+
+            // set to flash color
+            self.setPointHSL(point, flashColorHSL);
+
+            var flashUpdate = function() {
+                self.setPointHSL(point, this);
+            };
+
+            var flashComplete = function(){
+                self.setPointColor(point, ORBITAL.Util.colorFn(point.mag));
+                delete point.flashTween;
+            };
+
+            // tween to new color
+            opts.flashDuration = opts.flashDuration || 2000;
+            point.flashTween = new TWEEN.Tween(flashColorHSL)
+                .to(beforeColorHSL, opts.flashDuration)
+                .easing(TWEEN.Easing.Quadratic.Out)
+                .onUpdate(flashUpdate)
+                .onComplete(flashComplete)
+                .start();
+        }
+
         if(opts.mag) {
             point.mesh.scale.z = -(opts.mag * 100);
             if(!opts.color && !point.flashTween) {
                 opts.color = ORBITAL.Util.colorFn(opts.mag);
             }
-        }
-
-        if(opts.flash && !point.flashTween) {
-            // get current color
-            var beforeColor = ORBITAL.Util.colorFn(point.mag);
-
-            //point.mesh.geometry.faces[0].color.getHSL();
-            var flashColor = opts.flash;
-
-            // set to flash color
-            self.setPointColor(point, flashColor);
-            // self.setPointFacesColor(point.mesh, flashColor);
-
-            var flashUpdate = function() {
-                self.setPointHSL(this.mesh, this);
-            };
-
-            var flashComplete = function(){
-                delete this.flashTween;
-            };
-
-            // tween to new color
-            opts.flashDuration = opts.flashDuration || 1000;
-            point.flashTween = new TWEEN.Tween(point.mesh.material.color)
-                .to(beforeColor.getHSL())
-
-                // .to(beforeColor.getHSL(), opts.flashDuration)
-                .easing(TWEEN.Easing.Quadratic.In)
-                // .onUpdate(flashUpdate)
-                .onComplete(flashComplete)
-                .start();
         }
 
         if(opts.color && !point.flashTween) {
@@ -152,6 +168,7 @@ ORBITAL.PointUtil = (function (self) {
 
 ORBITAL.Point = function(lat, lng, mag, mesh, scene, data, onUpdate) {
     this.relMesh = mesh;
+    this.mag = mag;
     this.mesh = ORBITAL.PointUtil.meshForLL(lat, lng, mag, this.relMesh.position, scene);
     this.meta = data || null;
     this.onUpdate = onUpdate || null;
@@ -177,19 +194,15 @@ ORBITAL.Point.prototype.setMag = function(mag) {
 };
 
 ORBITAL.Point.prototype.update = function(opts) {
-    if (!opts){
-        var xyz = this.getXY();
-        opts = {
-            mag:this.mag,
-            x:xyz.x,
-            y:xyz.y,
-            z:xyz.z
-        };
+    var _opts = this.getXY();
+    _opts.mag = this.mag;
+    for (var attr in opts) {
+        _opts[attr] = opts[attr];
     }
 
     if(this.onUpdate){
-        this.onUpdate(opts);
+        this.onUpdate(_opts);
     } else {
-        ORBITAL.PointUtil.meshUpdate(this, opts);
+        ORBITAL.PointUtil.meshUpdate(this, _opts);
     }
 };
