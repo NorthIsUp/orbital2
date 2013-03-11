@@ -9,7 +9,7 @@ if(System.support.webgl === false){
 } else {
 
   var $container = $('#container');
-  var globe = new ORBITAL.Globe($container, {scale: 2});
+  var globe = new ORBITAL.Globe($container, {scale: 1});
   globe.animate();
 
   var addGeoPoint = function(latitude, longitude) {
