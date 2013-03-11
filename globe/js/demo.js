@@ -9,61 +9,42 @@ if(System.support.webgl === false){
 } else {
 
   var $container = $('#container');
-  var globe = new ORBITAL.Globe($container);
+  var globe = new ORBITAL.Globe($container, {scale: 4});
   globe.animate();
 
-  var geoPoints = {};
-  var decay = 0.0001;
-
-  var ageGeoData = _.throttle(function() {
-    var d;
-
-    for (var key in geoPoints) {
-      d = geoPoints[key];
-      if(++d.age >= 5) {
-        d.mag -= decay;
-        if (d.mag <= 0) {
-          delete geoPoints[key];
-        }
-      }
-    }
-  }, 1000);
-
   var addGeoPoint = function(latitude, longitude) {
-    var lat = ORBITAL.GeoUtil.roundPoint(latitude, 1);
-    var lng = ORBITAL.GeoUtil.roundPoint(longitude, 1);
-    var key = ORBITAL.GeoUtil.llkey(lat, lng);
+    var point = globe.getPoint(latitude, longitude);
 
-    if (!(key in geoPoints)) {
-      geoPoints[key] = {lat:lat, lng:lng, mag:0, age:0};
-    } else {
-      var point = geoPoints[key];
-      var mag = point.mag;
-      var add = 0;
-
-      var scale = 1;
-
-      if (mag < 0.01 * scale) {
-        add = 10;
-      } else if (mag < 0.05 * scale) {
-        add = 5;
-      } else if (mag < 0.1 * scale) {
-        add = 1;
-      } else if (mag < 0.3 * scale) {
-        add = 0.5;
-      } else if (mag < 0.6 * scale) {
-        add = 0.3;
-      } else if (mag < 0.9 * scale) {
-        add = 0.1;
-      } else if (mag == 1 * scale) {
-        add = 0;
-      } else {
-        add = 0;
-      }
-
-      point.mag += add * 0.001;
-      globe.addPoint(point.lat, point.lng, point.mag);
+    if (!point) {
+      point = {lat:latitude, lng:longitude, mag:0};
     }
+
+    var mag = point.mag;
+    var add = 0;
+
+    var scale = 1;
+
+    if (mag < 0.01 * scale) {
+      add = 10;
+    } else if (mag < 0.05 * scale) {
+      add = 5;
+    } else if (mag < 0.1 * scale) {
+      add = 1;
+    } else if (mag < 0.3 * scale) {
+      add = 0.5;
+    } else if (mag < 0.6 * scale) {
+      add = 0.3;
+    } else if (mag < 0.9 * scale) {
+      add = 0.1;
+    } else if (mag == 1 * scale) {
+      add = 0;
+    } else {
+      add = 0;
+    }
+
+    point.mag += add * 0.001;
+    globe.addPoint(point.lat, point.lng, point.mag);
+
   };
 
   var handleGeoEvent = function(e) {
@@ -73,7 +54,6 @@ if(System.support.webgl === false){
 
     if (geo) { // geo might be undefined
       addGeoPoint(geo.latitude, geo.longitude);
-      ageGeoData();
       if(e.type == "Post"){
         showPost(data);
       }

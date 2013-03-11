@@ -77,11 +77,12 @@ ORBITAL.PointUtil = (function (self) {
         }
 
         if(opts.flash && !point.flashTween) {
-            // get current color
-            var beforeColorHSL = ORBITAL.Util.colorFn(point.mag).getHSL();
+            // FIXME AMH: Flash does not correctly traverse the HSL wheel.
+            // currently it treats it as a Cartesian plane, needs to be radial.
+            opts.flashDuration = opts.flashDuration || 2000;
 
-            // need to create a new object apparently
-            beforeColorHSL = {h:beforeColorHSL.h, s:beforeColorHSL.s, l:beforeColorHSL.l};
+            // get current color
+            var beforeColorHSL = _.clone(ORBITAL.Util.colorFn(point.mag).getHSL());
 
             var flashColor = opts.flashColor || opts.flash;
             var flashColorHSL = flashColor.getHSL();
@@ -98,18 +99,31 @@ ORBITAL.PointUtil = (function (self) {
                 delete point.flashTween;
             };
 
-            // tween to new color
-            opts.flashDuration = opts.flashDuration || 2000;
-            point.flashTween = new TWEEN.Tween(flashColorHSL)
-                .to(beforeColorHSL, opts.flashDuration)
-                .easing(TWEEN.Easing.Cubic.Out)
-                .onUpdate(flashUpdate)
-                .onComplete(flashComplete)
-                .start();
+            var fadeBack = function(){
+                // to old color
+                point.flashTween = new TWEEN.Tween(_.clone(flashColorHSL))
+                    .to(beforeColorHSL, opts.flashDuration)
+                    .easing(TWEEN.Easing.Cubic.Out)
+                    .onUpdate(flashUpdate)
+                    .onComplete(flashComplete)
+                    .start();
+            };
+
+            var fadeFlash = function(){
+                // to flash color
+                point.flashTween = new TWEEN.Tween(_.clone(beforeColorHSL))
+                    .to(flashColorHSL, 200)
+                    .easing(TWEEN.Easing.Quadratic.InOut)
+                    .onUpdate(flashUpdate)
+                    .onComplete(fadeBack)
+                    .start();
+            };
+
+            fadeFlash();
         }
 
         if(opts.mag) {
-            point.mesh.scale.z = -(opts.mag * 100);
+            point.mesh.scale.z = -(opts.mag * 100 / point.scale);
             if(!opts.color && !point.flashTween) {
                 opts.color = ORBITAL.Util.colorFn(opts.mag);
             }
@@ -127,13 +141,15 @@ ORBITAL.PointUtil = (function (self) {
     };
 
     self.meshForLL = function(lat, lng, mag, position, scene, opts){
-        opts = opts || {};
+        opts = opts || {
+            scale: 1
+        };
         var xyz = ORBITAL.GeoUtil.xyzFromGeo(lat, lng);
         var color = ORBITAL.Util.colorFn(mag);
 
         var point;
 
-        point = self.getNewSquareMesh(1);
+        point = self.getNewSquareMesh(1/opts.scale);
         point.type = "point";
 
         self.setPointColor(point, color);
@@ -166,12 +182,17 @@ ORBITAL.PointUtil = (function (self) {
     return self;
 }());
 
-ORBITAL.Point = function(lat, lng, mag, mesh, scene, data, onUpdate) {
-    this.relMesh = mesh;
+ORBITAL.Point = function(lat, lng, mag, mesh, scene, opts) {
+    this.lat = lat;
+    this.lng = lng;
     this.mag = mag;
-    this.mesh = ORBITAL.PointUtil.meshForLL(lat, lng, mag, this.relMesh.position, scene);
-    this.meta = data || null;
-    this.onUpdate = onUpdate || null;
+
+    this.relMesh = mesh;
+    this.meta = opts.data || null;
+    this.onUpdate = opts.onUpdate || null;
+    this.scale = opts.scale || 1;
+
+    this.mesh = ORBITAL.PointUtil.meshForLL(lat, lng, mag, this.relMesh.position, scene, {scale:opts.scale});
 };
 
 ORBITAL.Point.prototype = Object.create({});

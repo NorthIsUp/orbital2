@@ -1,5 +1,9 @@
-ORBITAL.Globe = function($container, colorFn) {
+ORBITAL.Globe = function($container, opts) {
     self = self || {};
+    opts = opts || {};
+
+    opts.scale = opts.scale || 2;
+    opts.worldImage = opts.worldImage || 'world.jpg';
 
     var shaders = {
         'earth' : {
@@ -86,7 +90,7 @@ ORBITAL.Globe = function($container, colorFn) {
 
         shader = shaders['earth'];
         uniforms = THREE.UniformsUtils.clone(shader.uniforms);
-        uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+'world-2.jpg');
+        uniforms['texture'].value = THREE.ImageUtils.loadTexture(imgDir+opts.worldImage);
 
         material = new THREE.ShaderMaterial({
             uniforms: uniforms,
@@ -140,14 +144,22 @@ ORBITAL.Globe = function($container, colorFn) {
         });
     };
 
+    self.getPoint = function(lat, lng) {
+        var key = self.llkey(lat, lng);
+        if (key in self.pointCache) {
+            return self.pointCache[key];
+        }
+    };
+
     self.addPoint = function(lat, lng, mag) {
-        var key = ORBITAL.GeoUtil.llkey(lat, lng);
+        var ll = self.llround(lat, lng);
+        var key = self.llkey(ll.lat, ll.lng);
         var point = null;
         if (key in self.pointCache){
             point = self.pointCache[key];
             point.setMag(mag);
         } else {
-            point = new ORBITAL.Point(lat, lng, mag, mesh, self.scene);
+            point = new ORBITAL.Point(ll.lat, ll.lng, mag, mesh, self.scene, opts);
             self.pointCache[key] = point;
         }
         point.update({
@@ -155,6 +167,22 @@ ORBITAL.Globe = function($container, colorFn) {
             flashOver:true,
             flashDuration:60 * 1000
         });
+    };
+
+    self.roundPoint = function(coord) {
+        return ORBITAL.GeoUtil.roundPoint(coord, opts.scale);
+    };
+
+    self.llround = function(lat, lng) {
+        return {
+            lat: self.roundPoint(lat),
+            lng: self.roundPoint(lng)
+        };
+    };
+
+    self.llkey = function(lat, lng) {
+        ll = self.llround(lat, lng);
+        return ORBITAL.GeoUtil.llkey(ll.lat, ll.lng);
     };
 
     var projector = new THREE.Projector();
@@ -307,7 +335,7 @@ ORBITAL.Globe = function($container, colorFn) {
         self.glide(t.x, t.y);
 
         if(opts.hilight) {
-            point = self.pointCache[ORBITAL.GeoUtil.llkey(lat, lng)];
+            point = self.pointCache[self.llkey(lat, lng)];
 
         }
     };
