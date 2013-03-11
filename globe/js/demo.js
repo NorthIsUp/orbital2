@@ -97,7 +97,7 @@ if(System.support.webgl === false){
     $avatar.attr("src", mb.author.avatar);
     $post.html(mb.post.messages.formatted);
 
-    $post.prepend($avatar);
+    // $post.prepend($avatar);
     $postbox.append($post);
 
     postinfo.append($postbox);
@@ -108,7 +108,7 @@ if(System.support.webgl === false){
 
     // globe.setFocus(mb.geo.latitude, mb.geo.longitude);
 
-  }, 5 * 1000);
+  }, 10);
 
   var ev = new EventSource("http://realtime.services.disqus.com/api/raw/orbital");
 

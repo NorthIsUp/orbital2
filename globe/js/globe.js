@@ -153,7 +153,7 @@ ORBITAL.Globe = function($container, colorFn) {
         point.update({
             flash:new THREE.Color("#F00"),
             flashOver:true,
-            flashDuration:300 * 1000
+            flashDuration:60 * 1000
         });
     };
 

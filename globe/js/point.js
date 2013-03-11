@@ -102,7 +102,7 @@ ORBITAL.PointUtil = (function (self) {
             opts.flashDuration = opts.flashDuration || 2000;
             point.flashTween = new TWEEN.Tween(flashColorHSL)
                 .to(beforeColorHSL, opts.flashDuration)
-                .easing(TWEEN.Easing.Quadratic.Out)
+                .easing(TWEEN.Easing.Cubic.Out)
                 .onUpdate(flashUpdate)
                 .onComplete(flashComplete)
                 .start();
