@@ -1,6 +1,6 @@
 html{height:100%;overflow:hidden;}
-body{margin:0;padding:0;height:100%;background:#000000 url(loading.gif) center center no-repeat;color:white;font-size:13px;font-family:sans-serif;line-height:20px;}
-.postbox{width:30em;padding:1em;background-color:#222;background-color:rgba(0, 0, 0, 0.2);}
+body{margin:0;padding:0;height:100%;background:#000000 url(loading.gif) center center no-repeat;color:white;font-size:13px;font-family:Gotham,"Helvetica Neue",sans-serif;line-height:20px;}
+.postbox{width:30em;padding:1em;background-color:#222;background-color:rgba(0, 0, 0, 0.2);font-family:"Gotham Rounded","Helvetica Neue",sans-serif;}
 .postbox.avatar{display:inline-block;float:left;width:30px;}
 .info{position:absolute;right:10px;bottom:5px;padding:10px;border-radius:3px;background-color:rgba(0, 0, 0, 0.8);font-size:11px;}
 #container{color:#fff;font:13px/20px Arial,sans-serif;}
@@ -8,7 +8,7 @@ body{margin:0;padding:0;height:100%;background:#000000 url(loading.gif) center c
 a{color:#aaa;text-decoration:none;}
 a:hover{text-decoration:underline;}
 .bull{padding:0 5px;color:#555;}
-#title{position:absolute;top:20px;left:20px;padding:10px;width:270px;border-radius:3px;background-color:rgba(0, 0, 0, 0.2);font:20px Georgia;}
+#title{position:absolute;top:20px;left:20px;padding:10px;width:270px;border-radius:3px;background-color:rgba(0, 0, 0, 0.2);font-family:20px Gotham;}
 .year{float:left;width:90px;height:30px;color:rgba(255, 255, 255, 0.4);text-align:center;font:16px Georgia;line-height:26px;cursor:pointer;-webkit-transition:all 0.1s ease-out;}
 .year:hover,.year.active{color:#fff;font-size:23px;}
 #ce span{display:none;}

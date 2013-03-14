@@ -1,3 +1,6 @@
+if (!window.RequestAnimationFrame) {
+  window.RequestAnimationFrame = window.mozRequestAnimationFrame || window.webkitRequestAnimationFrame || window.oRequestAnimationFrame || window.msRequestAnimationFrame || function (f) { return setTimeout(f, 0); };
+}
 if(System.support.webgl === false){
 
   var message = document.createElement( 'div' );
@@ -55,13 +58,13 @@ if(System.support.webgl === false){
     if (geo) { // geo might be undefined
       addGeoPoint(geo.latitude, geo.longitude);
       if(e.type == "Post"){
-        showPost(data);
+        requestAnimationFrame(function(){showPost(data);});
       }
     }
 
   };
 
-  var showPost = _.throttle(function(message) {
+  var showPost = _.debounce(function(message) {
     var mb = message.message_body;
 
     var postinfo = $("#postInfo");
@@ -80,7 +83,7 @@ if(System.support.webgl === false){
     // $post.prepend($avatar);
     $postbox.append($post);
 
-    // postinfo.append($postbox);
+    postinfo.append($postbox);
 
     while(postinfo.height() > window.innerHeight){
       $("#postInfo div:first").remove();
@@ -90,7 +93,20 @@ if(System.support.webgl === false){
 
   }, 0);
 
-  var ev = new EventSource("http://realtime.services.disqus.com/api/raw/orbital");
+  var ageGeoPoints = function() {
+    for (var key in globe.pointCache) {
+      var point = globe.pointCache[key];
+      point.age().update();
+    }
+    _.delay(ageGeoPoints, 0.1);
+  };
+  ageGeoPoints();
+
+  try {
+    var ev = new EventSource("http://realtime.services.disqus.com/api/raw/orbital");
+  } catch (e) {
+    var ev = new EventSourcePollyfill("http://realtime.services.disqus.com/api/raw/orbital");
+  }
 
   ev.addEventListener("Post", handleGeoEvent);
   ev.addEventListener("Vote", handleGeoEvent);

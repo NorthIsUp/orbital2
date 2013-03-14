@@ -187,35 +187,46 @@ ORBITAL.Point = function(lat, lng, mag, mesh, scene, opts) {
     this.mesh = ORBITAL.PointUtil.meshForLL(lat, lng, mag, this.relMesh.position, scene, {scale:opts.scale});
 };
 
-ORBITAL.Point.prototype = Object.create({});
+_.extend(ORBITAL.Point.prototype, {
+    size : function(){
+        return this.mag * 100;
+    },
 
-ORBITAL.Point.prototype.size = function(){
-    return this.mag * 100;
-};
+    getXY : function() {
+        return ORBITAL.GeoUtil.xyzFromGeo(this.lat, this.lng);
+    },
 
-ORBITAL.Point.prototype.getXY = function() {
-    return ORBITAL.GeoUtil.xyzFromGeo(this.lat, this.lng);
-};
+    setLL : function(lat, lng) {
+        this.lat = lat;
+        this.lng = lng;
+        return this;
+    },
 
-ORBITAL.Point.prototype.setLL = function(lat, lng) {
-    this.lat = lat;
-    this.lng = lng;
-};
+    setMag : function(mag) {
+        this.mag = mag;
+        return this;
+    },
 
-ORBITAL.Point.prototype.setMag = function(mag) {
-    this.mag = mag;
-};
+    update : function(opts) {
+        var _opts = this.getXY();
+        _opts.mag = this.mag;
+        for (var attr in opts) {
+            _opts[attr] = opts[attr];
+        }
 
-ORBITAL.Point.prototype.update = function(opts) {
-    var _opts = this.getXY();
-    _opts.mag = this.mag;
-    for (var attr in opts) {
-        _opts[attr] = opts[attr];
+        if(this.onUpdate){
+            this.onUpdate(_opts);
+        } else {
+            ORBITAL.PointUtil.meshUpdate(this, _opts);
+        }
+        return this;
+    },
+
+    age : function(opts) {
+        this.mag -= this.mag > 0  ? 0.00001 : 0 ;
+        return this;
     }
 
-    if(this.onUpdate){
-        this.onUpdate(_opts);
-    } else {
-        ORBITAL.PointUtil.meshUpdate(this, _opts);
-    }
-};
+});
+// ORBITAL.Point.prototype = Object.create({});
+
