@@ -1,3 +1,5 @@
+Full disclosure: This is literally the first javascript I have written that was not in a w3c schools sandbox, sorry if it is more pythonic than javascript.
+
 The **WebGL Globe** is an open platform for visualizing geographic
 information in WebGL enabled browsers.
 It supports data in JSON format, a sample of which you can find [here]
