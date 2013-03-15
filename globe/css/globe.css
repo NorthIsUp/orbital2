@@ -9,6 +9,7 @@ a{color:#aaa;text-decoration:none;}
 a:hover{text-decoration:underline;}
 .bull{padding:0 5px;color:#555;}
 #title{position:absolute;top:20px;left:20px;padding:10px;width:270px;border-radius:3px;background-color:rgba(0, 0, 0, 0.2);font-family:20px Gotham;}
+#repo{position:absolute;top:20px;right:20px;padding:10px;width:270px;border-radius:3px;background-color:rgba(0, 0, 0, 0.2);font-family:20px Gotham;}
 .year{float:left;width:90px;height:30px;color:rgba(255, 255, 255, 0.4);text-align:center;font:16px Georgia;line-height:26px;cursor:pointer;-webkit-transition:all 0.1s ease-out;}
 .year:hover,.year.active{color:#fff;font-size:23px;}
 #ce span{display:none;}
