@@ -60,7 +60,7 @@ ORBITAL.Globe = function($container, opts) {
     };
 
     // TODO: document all this stuff
-    self.pointCache = [];
+    self.pointCache = {};
     self.focusPoints = [];
     self.earth = null;
 

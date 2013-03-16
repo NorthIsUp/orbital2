@@ -115,7 +115,17 @@ ORBITAL.PointUtil = (function (self) {
         }
 
         if(opts.mag) {
-            point.mesh.scale.z = -(opts.mag * 100 / point.scale);
+            newTween = new TWEEN.Tween(point.mesh.scale)
+                               .to({ z: -(opts.mag * 250 / point.scale)}, 250)
+                               .easing(TWEEN.Easing.Elastic.InOut);
+                               
+            if (point.zTween)
+                point.zTween.chain(newTween);
+            else
+                newTween.start();
+                
+            point.zTween = newTween;
+
             if(!opts.color && !point.flashTween) {
                 opts.color = ORBITAL.Util.colorFn(opts.mag);
             }
@@ -210,9 +220,7 @@ _.extend(ORBITAL.Point.prototype, {
     update : function(opts) {
         var _opts = this.getXY();
         _opts.mag = this.mag;
-        for (var attr in opts) {
-            _opts[attr] = opts[attr];
-        }
+        _.extend(_opts, opts);
 
         if(this.onUpdate){
             this.onUpdate(_opts);
@@ -223,7 +231,8 @@ _.extend(ORBITAL.Point.prototype, {
     },
 
     age : function(opts) {
-        this.mag -= this.mag > 0  ? 0.00001 : 0 ;
+        if (this.mag > 0)
+            this.mag -= 0.00005;
         return this;
     }
 

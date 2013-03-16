@@ -13,94 +13,75 @@ if(System.support.webgl === false){
 
   var $container = $('#container');
   var globe_scale = parseInt(ORBITAL.Util.getParameterByName('globeScale'), 10) || 1;
-  console.log(globe_scale);
   var globe = new ORBITAL.Globe($container, {scale: globe_scale});
   globe.animate();
 
   var addGeoPoint = function(latitude, longitude) {
-    var point = globe.getPoint(latitude, longitude);
-
-    if (!point) {
-      point = {lat:latitude, lng:longitude, mag:0};
-    }
+    var point = globe.getPoint(latitude, longitude) || {lat:latitude, lng:longitude, mag:0};
 
     var mag = point.mag;
-    var add = 0;
+    var add;
 
     var scale = 1;
 
     if (mag < 0.01 * scale) {
-      add = 10;
+      add = .01;
     } else if (mag < 0.05 * scale) {
-      add = 5;
+      add = .005;
     } else if (mag < 0.1 * scale) {
-      add = 1;
+      add = .001;
     } else if (mag < 0.3 * scale) {
-      add = 0.5;
+      add = .0005;
     } else if (mag < 0.6 * scale) {
-      add = 0.3;
+      add = .0003;
     } else if (mag < 0.9 * scale) {
-      add = 0.1;
-    } else if (mag == 1 * scale) {
-      add = 0;
+      add = .0001;
     } else {
       add = 0;
     }
 
-    point.mag += add * 0.001;
+    point.mag += add;
     globe.addPoint(point.lat, point.lng, point.mag);
 
   };
 
   var handleGeoEvent = function(e) {
-    var startTime = new Date();
     var data = JSON.parse(e.data);
     var geo = data.message_body.geo;
 
     if (geo) { // geo might be undefined
       addGeoPoint(geo.latitude, geo.longitude);
-      if(e.type == "Post"){
+/*      if(e.type == "Post"){
         requestAnimationFrame(function(){showPost(data);});
       }
+*/
     }
 
   };
 
+  var postinfo = document.getElementById("postInfo");
+  var remove = false;
   var showPost = _.debounce(function(message) {
     var mb = message.message_body;
 
-    var postinfo = $("#postInfo");
+    var postbox = document.createElement('div');
+    postbox.className = 'postbox';
+    postbox.innerHTML = '<div class="post">' + mb.post.messages.formatted + '</div>';
 
-    var $postbox = $("<div>");
-    var $post = $("<div>");
-    var $avatar = $("<img>");
+    postinfo.appendChild(postbox);
 
-    $postbox.addClass("postbox");
-    $post.addClass("post");
-    $avatar.addClass("avatar");
-
-    $avatar.attr("src", mb.author.avatar);
-    $post.html(mb.post.messages.formatted);
-
-    // $post.prepend($avatar);
-    $postbox.append($post);
-
-    postinfo.append($postbox);
-
-    while(postinfo.height() > window.innerHeight){
-      $("#postInfo div:first").remove();
-    }
-
-    // globe.setFocus(mb.geo.latitude, mb.geo.longitude);
-
+    remove = remove || (postinfo.offsetHeight > window.innerHeight);
+    if (remove)
+        postinfo.removeChild(postinfo.firstChild);
   }, 0);
 
   var ageGeoPoints = function() {
-    for (var key in globe.pointCache) {
-      var point = globe.pointCache[key];
+    var keys = Object.keys(globe.pointCache);
+    for (var i = keys.length-1; i>=0; i--) {
+      var point = globe.pointCache[keys[i]];
       point.age().update();
     }
-    _.delay(ageGeoPoints, 0.1);
+    _.delay(ageGeoPoints, 100);
   };
   ageGeoPoints();
 
@@ -113,9 +94,5 @@ if(System.support.webgl === false){
   ev.addEventListener("Post", handleGeoEvent);
   ev.addEventListener("Vote", handleGeoEvent);
   ev.addEventListener("ThreadVote", handleGeoEvent);
-
-  // globe.addFocusPoint('new york', 40.77, 73.98, 3);
-  // globe.addFocusPoint('london', 50.5, 0.166, 3);
-  // globe.focusRotate();
 
 }

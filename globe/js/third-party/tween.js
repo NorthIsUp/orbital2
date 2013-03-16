@@ -194,7 +194,15 @@ TWEEN.Tween = function ( object ) {
 
 	this.chain = function () {
 
-		_chainedTweens = arguments;
+		if (elapsed === 1) {
+            for ( var i = 0, numChainedTweens = arguments.length; i < numChainedTweens; i ++ ) {
+
+					arguments[ i ].start( time );
+
+				}
+        } else {
+            _chainedTweens = arguments;
+        }
 		return this;
 
 	};
@@ -271,7 +279,7 @@ TWEEN.Tween = function ( object ) {
 
 		}
 
-		if ( elapsed == 1 ) {
+		if ( elapsed === 1 ) {
 
 			if ( _repeat > 0 ) {
 
