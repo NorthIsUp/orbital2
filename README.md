@@ -1,3 +1,5 @@
+See it in action here http://map.labs.disqus.com/
+
 Full disclosure: This is literally the first javascript I have written that was not in a w3c schools sandbox, sorry if it is more pythonic than javascript.
 
 The **WebGL Globe** is an open platform for visualizing geographic
