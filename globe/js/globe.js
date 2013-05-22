@@ -13,6 +13,8 @@ ORBITAL.Globe = function($container, opts) {
         // _.clone(new THREE.Color("#922EFF").getHSL()),
         _.clone(new THREE.Color("#2E9FFF").getHSL())
     ];
+    
+    self.defaultColor = { r: 75/255, g: 173/255, b: 0};
 
     var shaders = {
         'earth' : {
@@ -160,7 +162,7 @@ ORBITAL.Globe = function($container, opts) {
         }
     };
 
-    self.addPoint = function(lat, lng, mag) {
+    self.addPoint = function(lat, lng, mag, color) {
         var ll = self.llround(lat, lng);
         var key = self.llkey(ll.lat, ll.lng);
         var point = null;
@@ -171,13 +173,27 @@ ORBITAL.Globe = function($container, opts) {
             point = new ORBITAL.Point(ll.lat, ll.lng, mag, mesh, self.scene, opts);
             self.pointCache[key] = point;
         }
-        point.update({
+        /*point.update({
             flash:true,
             flashOver:true,
             flashDuration:10 * 1000,
             flashHSLList: self.hslList
-        });
+        });*/
+        
+        ORBITAL.PointUtil.setPointColor(point,color?color:self.defaultColor);
+        return point;
     };
+    
+    self.removePoint = function(lat,lng) {
+	    var ll = self.llround(lat, lng);
+        var key = self.llkey(ll.lat, ll.lng);
+        var point = null;
+        if (key in self.pointCache){
+            point = self.pointCache[key];
+            self.scene.remove(point.mesh);
+            delete self.pointCache[key];
+        }
+    }
 
     self.roundPoint = function(coord) {
         return ORBITAL.GeoUtil.roundPoint(coord, opts.scale);
